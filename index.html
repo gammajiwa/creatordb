@@ -140,6 +140,9 @@
   .in::placeholder { color:var(--faint); }
   .in.mono { font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:12px; }
   .in.num { font-variant-numeric:tabular-nums; }
+  .in[type="number"] { -moz-appearance:textfield; }
+  .in[type="number"]::-webkit-outer-spin-button,
+  .in[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
   textarea.in { resize:vertical; min-height:70px; line-height:1.6; }
   select.in { cursor:pointer; }
   .money { display:grid; grid-template-columns:1fr 90px; gap:8px; }
@@ -513,8 +516,9 @@
   function applyChannel(r, item) {
     var sn = item.snippet || {}, st = item.statistics || {};
     if (sn.title) r.nama = sn.title;
+    var hidden = false;
     if (st.subscriberCount != null) r.sub = String(st.subscriberCount);
-    else r.sub = r.sub || "tersembunyi";
+    else if (!r.sub) { r.sub = ""; hidden = true; }
     if (sn.country) r.negara = sn.country;
     if (!String(r.fokus || "").trim() || r.fokus === "Indie (variety)") {
       var d = String(sn.description || "").replace(/\s+/g, " ").trim();
@@ -526,7 +530,7 @@
     var base = String(r.catatan || "").replace(/Arsip itch\.io - sub & fokus BELUM dicek/i, "").replace(/Ditambah lewat Scan - belum diverifikasi/i, "").trim();
     r.sumber = "YouTube Data API v3";
     var stamp = "Data YouTube API " + new Date().toISOString().slice(0,10);
-    r.catatan = [base, tag, stamp].filter(Boolean).join(" · ");
+    r.catatan = [base, hidden ? "Subscriber disembunyikan channel" : "", tag, stamp].filter(Boolean).join(" · ");
     if (n > 200000 && r.status === "Belum Dihubungi") r.status = "SIMPAN NANTI";
   }
 
@@ -991,7 +995,7 @@
 
     var body = el("div", "dbody");
     var g1 = el("div", "grid2");
-    g1.appendChild(field("Subscriber", bind(r, "sub", el("input", "in num mono", { placeholder:"belum dicek" }), renderList)));
+    g1.appendChild(field("Subscriber", bind(r, "sub", el("input", "in num mono", { type:"number", min:"0", step:"1", inputmode:"numeric", placeholder:"belum dicek" }), renderList)));
     g1.appendChild(field("Negara", bind(r, "negara", el("input", "in mono", { placeholder:"—" }), renderList)));
     body.appendChild(g1);
     body.appendChild(field("Fokus konten", bind(r, "fokus", el("input", "in", { placeholder:"—" }))));
@@ -1023,7 +1027,7 @@
     });
     g3.appendChild(field("Minta bayaran", paySel));
     var money = el("div", "money");
-    money.appendChild(bind(r, "harga", el("input", "in num mono", { placeholder:"0", inputmode:"decimal" }), renderStats));
+    money.appendChild(bind(r, "harga", el("input", "in num mono", { type:"number", min:"0", step:"any", inputmode:"decimal", placeholder:"0" }), renderStats));
     var curSel = el("select", "in mono");
     CURRENCIES.forEach(function (c) {
       var op = el("option"); op.value = c; op.textContent = c || "—";
