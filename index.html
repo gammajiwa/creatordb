@@ -176,10 +176,15 @@
   .log b { color:var(--good); font-weight:500; }
   .log i { color:var(--stop); font-style:normal; }
 
-  footer { color:var(--faint); font-size:12px; line-height:1.75; border-top:1px solid var(--line); padding-top:14px; }
-  footer b { color:var(--muted); font-weight:500; }
-  footer p { margin:0 0 7px; max-width:78ch; }
   code { font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:11.5px; background:var(--surface2); border:1px solid var(--line2); border-radius:4px; padding:1px 5px; }
+
+  .help { display:flex; flex-direction:column; gap:0; }
+  .helprow { display:grid; grid-template-columns:132px 1fr; gap:14px; padding:9px 0; border-top:1px solid var(--line2); align-items:start; }
+  .helprow:first-child { border-top:0; }
+  .helprow dt { font-weight:500; font-size:13px; }
+  .helprow dd { margin:0; color:var(--muted); font-size:12.5px; line-height:1.6; }
+  .helpnote { border-left:2px solid var(--warn); background:var(--warn-b); color:var(--warn); padding:9px 12px; border-radius:0 7px 7px 0; font-size:12.5px; line-height:1.6; }
+  @media (max-width:560px) { .helprow { grid-template-columns:1fr; gap:3px; } }
 
   .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(14px); background:var(--ink); color:var(--ground); font-size:13px; padding:10px 18px; border-radius:8px; opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; z-index:70; max-width:90vw; }
   .toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -208,6 +213,7 @@
       <button id="openBtn" class="ghost">Buka&hellip;</button>
       <button id="csvBtn" class="ghost">CSV</button>
       <button id="saveBtn">Simpan</button>
+      <button id="helpBtn" class="ghost" title="Bantuan" aria-label="Bantuan">?</button>
     </div>
   </header>
 
@@ -240,33 +246,6 @@
     <section class="pane" id="detail"></section>
   </div>
 
-  <footer>
-    <p><b>Daftar bersama.</b> Waktu pertama dibuka, tool ini otomatis muat <code>data.json</code> yang ada di folder yang sama
-    &mdash; itu daftar dasar buat satu tim, jadi semua orang mulai dari isi yang sama. Datanya nggak ditanam di dalam HTML;
-    kalau kamu mau perbarui daftar timnya, tinggal ganti <code>data.json</code>-nya. Tombol <b>Muat Data Tim</b> narik ulang
-    kapan pun, dan yang udah ada di layarmu nggak bakal kembar.</p>
-
-    <p><b>Editan kamu pribadi.</b> Begitu kamu ngetik apa pun, itu kesimpen di browser kamu sendiri dan nggak keganggu
-    sama <code>data.json</code>. Database-nya nempel di dalam <code>index.html</code> ini.
-    Tiap ketikan langsung kesimpen di browser. <b>Simpan</b> nulis ke satu file <code>youtuber-db.json</code>
-    yang kamu pilih sekali &mdash; klik berikutnya langsung nimpa file yang sama. Tombol <b>CSV</b> cuma buat ekspor ke Excel.</p>
-
-    <p><b>Scan &amp; Tambah</b> nerima URL, <code>@handle</code>, atau nama per baris. Yang udah ada dipisahin dari yang baru
-    jadi nggak bakal kembar &mdash; pembandingnya handle atau ID channel, bukan nama.</p>
-
-    <p><b>Nggak ada data bawaan.</b> Tool ini mulai kosong. Semua isinya kamu tarik sendiri lewat
-    <b>Cari Channel</b> &mdash; masukin judul game sejenis, dia nyari video setahun terakhir, ngambil channel yang bikin,
-    lalu narik subscriber, negara, dan deskripsi aslinya dari YouTube Data API v3. Tiap baris nyimpen kolom
-    <b>Sumber</b> jadi asal-usulnya selalu bisa dicek.</p>
-
-    <p><b>Filter rentang subscriber.</b> Isi <code>min sub</code> dan <code>max sub</code> buat nyaring ukuran channel,
-    atau klik <code>5k&ndash;20k</code> buat langsung ke rentang paling realistis buat dev kecil &mdash; penontonnya lebih niat
-    dan peluang dibales jauh lebih tinggi daripada channel gede. Filter ini cuma jalan buat baris yang datanya udah keisi,
-    jadi jalanin <b>Ambil Data YouTube</b> dulu.</p>
-
-    <p><b>Email tetap manual.</b> YouTube naruh alamat bisnis di balik CAPTCHA, jadi API pun nggak ngasih.
-    Buat pasar Mandarin, kreator game mayoritas ada di <b>Bilibili</b>, bukan YouTube.</p>
-  </footer>
 
 </div>
 
@@ -1115,6 +1094,45 @@
   function renderAll() { renderChips(); renderList(); renderDetail(); renderStats(); }
 
   /* ---------- wiring ---------- */
+
+  function openHelp() {
+    sheet(function (box, close) {
+      var h2 = el("h2"); h2.textContent = "Cara pakai";
+      var dl = el("dl", "help");
+      [
+        ["Cari Channel", "Masukin judul game sejenis. Tool nyari video setahun terakhir, ambil channel yang bikin, lalu tarik subscriber dan negaranya dari YouTube Data API v3."],
+        ["Lengkapi Data", "Ngisi subscriber, negara, dan nama resmi buat baris yang datanya masih kosong."],
+        ["Scan & Tambah", "Tempel URL, @handle, atau nama channel per baris. Yang udah ada dipisahin dari yang baru, jadi nggak bakal kembar."],
+        ["Muat Data Tim", "Narik ulang daftar bersama dari data.json. Otomatis jalan pas pertama buka."],
+        ["Simpan", "Nulis seluruh database ke satu file youtuber-db.json. Pilih lokasinya sekali, klik berikutnya langsung nimpa file yang sama. Bisa juga pakai Ctrl+S."],
+        ["CSV", "Ekspor buat Excel atau Sheets. Bukan tempat nyimpan."],
+        ["Rentang sub", "Isi min dan max buat nyaring ukuran channel. Tombol 5k\u201320k langsung ke rentang paling realistis buat dev kecil \u2014 penontonnya lebih niat dan peluang dibales jauh lebih tinggi daripada channel gede."],
+        ["Kolom Sumber", "Nyatet asal-usul tiap baris, jadi datanya selalu bisa dicek. Chip Estimasi nyaring yang angkanya masih kiraan."]
+      ].forEach(function (r) {
+        var row = el("div", "helprow");
+        var dt = el("dt"); dt.textContent = r[0];
+        var dd = el("dd"); dd.textContent = r[1];
+        row.appendChild(dt); row.appendChild(dd); dl.appendChild(row);
+      });
+
+      var note = el("div", "helpnote");
+      note.textContent = "Email nggak bisa diambil otomatis \u2014 YouTube naruh alamat bisnis di balik CAPTCHA, jadi API pun nggak ngasih. Itu harus dicari manual di tab About tiap channel.";
+
+      var note2 = el("div", "helpnote");
+      note2.style.borderLeftColor = "var(--accent)";
+      note2.style.background = "var(--accent-b)";
+      note2.style.color = "var(--accent)";
+      note2.textContent = "Editan kamu kesimpen di browser kamu sendiri, nggak keganggu sama data tim dan nggak keliatan orang lain. Klik Simpan kalau mau punya salinannya sebagai file.";
+
+      var foot = el("div", "sheetfoot");
+      var ok = el("button", "primary"); ok.textContent = "Ngerti";
+      ok.addEventListener("click", close);
+      foot.appendChild(ok);
+
+      box.appendChild(h2); box.appendChild(dl); box.appendChild(note); box.appendChild(note2); box.appendChild(foot);
+    });
+  }
+  document.getElementById("helpBtn").addEventListener("click", openHelp);
 
   document.getElementById("saveBtn").addEventListener("click", save);
   document.getElementById("openBtn").addEventListener("click", openFile);
