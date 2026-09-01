@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YouTuber Marketing List</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#EEF0F4; --surface:#FFFFFF; --surface2:#F5F6FA; --surface3:#E9ECF3;
+    --ink:#191C24; --muted:#5F6577; --faint:#8A90A2;
+    --line:#D8DCE6; --line2:#E7EAF1;
+    --accent:#4A56C9; --accent-b:#E7E9FA; --on-accent:#FFFFFF;
+    --good:#1F7A55; --good-b:#DEF0E7;
+    --warn:#A65F16; --warn-b:#FAECDA;
+    --stop:#A33C46; --stop-b:#F8E4E6;
+    --shadow:0 1px 2px rgba(25,28,36,.05), 0 8px 22px -14px rgba(25,28,36,.22);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#12141C; --surface:#1A1D27; --surface2:#212533; --surface3:#272C3C;
+      --ink:#E8EAF2; --muted:#98A0B4; --faint:#727A8F;
+      --line:#2E3444; --line2:#252A38;
+      --accent:#8E9BF5; --accent-b:#242A4A; --on-accent:#131629;
+      --good:#5FC79A; --good-b:#16332A;
+      --warn:#DDA062; --warn-b:#37291A;
+      --stop:#E08A93; --stop-b:#372027;
+      --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 22px -14px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#12141C; --surface:#1A1D27; --surface2:#212533; --surface3:#272C3C;
+    --ink:#E8EAF2; --muted:#98A0B4; --faint:#727A8F;
+    --line:#2E3444; --line2:#252A38;
+    --accent:#8E9BF5; --accent-b:#242A4A; --on-accent:#131629;
+    --good:#5FC79A; --good-b:#16332A;
+    --warn:#DDA062; --warn-b:#37291A;
+    --stop:#E08A93; --stop-b:#372027;
+    --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 22px -14px rgba(0,0,0,.7);
+  }
+
+  * { box-sizing:border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    background:var(--ground); color:var(--ink);
+    font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  img { max-width:100%; }
+  [hidden] { display:none !important; }
+
+  .shell { max-width:1420px; margin:0 auto; padding:20px 18px 40px; display:flex; flex-direction:column; gap:14px; }
+
+  .masthead { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
+  h1 { font-size:19px; font-weight:600; margin:0; letter-spacing:-.01em; }
+  .kicker { margin:1px 0 0; font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); }
+  .toolbar { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+
+  button {
+    font-family:inherit; font-size:13px; font-weight:500; color:var(--ink);
+    background:var(--surface); border:1px solid var(--line); border-radius:7px;
+    padding:7px 12px; cursor:pointer; transition:border-color .12s, background .12s;
+  }
+  button:hover:not(:disabled) { border-color:var(--accent); }
+  button:disabled { opacity:.45; cursor:default; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+  button.primary:hover:not(:disabled) { filter:brightness(1.08); }
+  button.ghost { background:transparent; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .saver { font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:11px; color:var(--faint); }
+  .saver[data-on="1"] { color:var(--accent); }
+
+  .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(128px,1fr)); gap:9px; }
+  .stat { background:var(--surface); border:1px solid var(--line2); border-radius:9px; padding:10px 13px; box-shadow:var(--shadow); }
+  .stat .lab { font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:9.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); }
+  .stat .val { font-size:22px; font-weight:600; line-height:1.25; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .stat .val small { font-size:12px; font-weight:400; color:var(--muted); }
+  .stat.money .val { font-size:15px; font-family:"IBM Plex Mono", monospace; font-weight:500; }
+  .stat.alert { border-color:var(--warn); background:var(--warn-b); }
+  .stat.alert .lab, .stat.alert .val { color:var(--warn); }
+
+  .split { display:grid; grid-template-columns:minmax(300px, 390px) 1fr; gap:13px; align-items:start; }
+  .pane { background:var(--surface); border:1px solid var(--line2); border-radius:11px; box-shadow:var(--shadow); overflow:hidden; }
+
+  .listhead { padding:11px 12px; border-bottom:1px solid var(--line2); display:flex; flex-direction:column; gap:8px; }
+  .search { width:100%; background:var(--surface2); border:1px solid var(--line); border-radius:7px; padding:8px 11px; color:var(--ink); font-family:inherit; font-size:13px; }
+  .chips { display:flex; gap:5px; flex-wrap:wrap; }
+  .chip { font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:10.5px; padding:5px 9px; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--muted); }
+  .chip[aria-pressed="true"] { background:var(--accent-b); border-color:var(--accent); color:var(--accent); }
+  .sortrow { display:flex; gap:6px; align-items:center; }
+  .sortsel { flex:1; background:var(--surface2); border:1px solid var(--line); border-radius:7px; padding:6px 8px; color:var(--ink); font-family:"IBM Plex Mono", monospace; font-size:11px; }
+  .count { font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--faint); white-space:nowrap; }
+  .rangerow { display:flex; gap:6px; align-items:center; }
+  .rangein { flex:1; width:100%; min-width:0; background:var(--surface2); border:1px solid var(--line); border-radius:7px; padding:6px 8px; color:var(--ink); font-family:"IBM Plex Mono", monospace; font-size:11px; }
+  .rangein:focus { border-color:var(--accent); background:var(--surface); outline:none; }
+  .rangerow > span { color:var(--faint); font-size:11px; flex:none; }
+  .rangerow > button { flex:none; padding:5px 9px; font-size:11px; font-family:"IBM Plex Mono", monospace; }
+  .rangerow > button.on { background:var(--accent-b); border-color:var(--accent); color:var(--accent); }
+
+  .list { max-height:min(62vh, 600px); overflow-y:auto; }
+  .item {
+    display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:9px;
+    width:100%; text-align:left; padding:9px 12px;
+    background:transparent; border:0; border-bottom:1px solid var(--line2); border-radius:0;
+    cursor:pointer; font-family:inherit; font-size:13px; color:var(--ink);
+  }
+  .item:hover { background:var(--surface2); }
+  .item[aria-current="true"] { background:var(--accent-b); }
+  .item[aria-current="true"] .iname { color:var(--accent); }
+  .item.prio { box-shadow:inset 3px 0 0 var(--accent); }
+  .item.dim { opacity:.45; }
+  .istack { min-width:0; }
+  .iname { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .imeta { font-family:"IBM Plex Mono", monospace; font-size:10.5px; color:var(--faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .isub { font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .isub.unknown { color:var(--faint); font-style:italic; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--line); flex:none; }
+  .dot.d-accent { background:var(--accent); } .dot.d-good { background:var(--good); }
+  .dot.d-warn { background:var(--warn); } .dot.d-stop { background:var(--stop); }
+
+  .dhead { padding:15px 18px; border-bottom:1px solid var(--line2); display:flex; align-items:flex-start; gap:10px; }
+  .dhead .grow { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .dname { width:100%; background:transparent; border:1px solid transparent; border-radius:6px; padding:4px 6px; margin:-4px 0 0 -6px; color:var(--ink); font-family:inherit; font-size:18px; font-weight:600; }
+  .dname:hover { border-color:var(--line); }
+  .dname:focus { border-color:var(--accent); background:var(--surface2); outline:none; }
+  .dlink { width:100%; background:transparent; border:1px solid transparent; border-radius:6px; padding:3px 6px; margin-left:-6px; color:var(--muted); font-family:"IBM Plex Mono", monospace; font-size:11.5px; }
+  .dlink:hover { border-color:var(--line); }
+  .dlink:focus { border-color:var(--accent); background:var(--surface2); outline:none; }
+  .go { flex:none; display:inline-grid; place-items:center; height:32px; padding:0 12px; border-radius:7px; border:1px solid var(--line); background:var(--surface2); color:var(--muted); text-decoration:none; font-size:12px; font-weight:500; white-space:nowrap; }
+  .go:hover { color:var(--accent); border-color:var(--accent); }
+
+  .dbody { padding:16px 18px 20px; display:flex; flex-direction:column; gap:13px; }
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit, minmax(148px,1fr)); gap:11px; }
+  .field { display:flex; flex-direction:column; gap:5px; min-width:0; }
+  .field > label { font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:9.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); }
+  .in { width:100%; background:var(--surface2); border:1px solid var(--line); border-radius:7px; padding:8px 10px; color:var(--ink); font-family:inherit; font-size:13px; }
+  .in:focus { border-color:var(--accent); background:var(--surface); outline:none; }
+  .in::placeholder { color:var(--faint); }
+  .in.mono { font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:12px; }
+  .in.num { font-variant-numeric:tabular-nums; }
+  textarea.in { resize:vertical; min-height:70px; line-height:1.6; }
+  select.in { cursor:pointer; }
+  .money { display:grid; grid-template-columns:1fr 90px; gap:8px; }
+  .s-neutral { border-color:var(--line); }
+  .s-accent { border-color:var(--accent); background:var(--accent-b); color:var(--accent); }
+  .s-good { border-color:var(--good); background:var(--good-b); color:var(--good); }
+  .s-warn { border-color:var(--warn); background:var(--warn-b); color:var(--warn); }
+  .s-stop { border-color:var(--stop); background:var(--stop-b); color:var(--stop); }
+  select.s-accent option, select.s-good option, select.s-warn option, select.s-stop option { color:var(--ink); background:var(--surface); }
+  .drow { display:flex; justify-content:space-between; align-items:center; gap:10px; padding-top:5px; border-top:1px solid var(--line2); }
+  .kill { color:var(--faint); border-color:transparent; background:transparent; }
+  .kill:hover { color:var(--stop); border-color:var(--stop); }
+
+  .blank { padding:56px 24px; text-align:center; color:var(--faint); }
+  .blank strong { display:block; color:var(--muted); font-weight:500; margin-bottom:4px; }
+
+  .sheet { position:fixed; inset:0; background:rgba(10,12,18,.55); display:grid; place-items:center; padding:20px; z-index:50; }
+  .sheetbox { background:var(--surface); border:1px solid var(--line); border-radius:13px; box-shadow:var(--shadow); width:min(680px,100%); max-height:88vh; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:13px; }
+  .sheetbox h2 { margin:0; font-size:16px; font-weight:600; }
+  .sheetbox p { margin:0; color:var(--muted); font-size:13px; line-height:1.65; }
+  .sheetbox a { color:var(--accent); }
+  .sheetfoot { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+  .bucket { border:1px solid var(--line2); border-radius:9px; padding:11px 13px; background:var(--surface2); }
+  .bucket h3 { margin:0 0 6px; font-family:"IBM Plex Mono", monospace; font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); font-weight:500; }
+  .bucket ul { margin:0; padding-left:17px; font-family:"IBM Plex Mono", monospace; font-size:11.5px; color:var(--muted); max-height:150px; overflow-y:auto; line-height:1.75; }
+  .bucket.new { border-color:var(--good); background:var(--good-b); }
+  .bucket.new h3, .bucket.new ul { color:var(--good); }
+  .bucket.dupe { border-color:var(--warn); background:var(--warn-b); }
+  .bucket.dupe h3, .bucket.dupe ul { color:var(--warn); }
+
+  .bar { height:6px; border-radius:999px; background:var(--surface3); overflow:hidden; }
+  .bar > i { display:block; height:100%; width:0; background:var(--accent); transition:width .2s; }
+  .log { font-family:"IBM Plex Mono", monospace; font-size:11.5px; color:var(--muted); max-height:180px; overflow-y:auto; line-height:1.8; }
+  .log b { color:var(--good); font-weight:500; }
+  .log i { color:var(--stop); font-style:normal; }
+
+  footer { color:var(--faint); font-size:12px; line-height:1.75; border-top:1px solid var(--line); padding-top:14px; }
+  footer b { color:var(--muted); font-weight:500; }
+  footer p { margin:0 0 7px; max-width:78ch; }
+  code { font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:11.5px; background:var(--surface2); border:1px solid var(--line2); border-radius:4px; padding:1px 5px; }
+
+  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(14px); background:var(--ink); color:var(--ground); font-size:13px; padding:10px 18px; border-radius:8px; opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; z-index:70; max-width:90vw; }
+  .toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+  @media (max-width:900px) { .split { grid-template-columns:1fr; } .list { max-height:44vh; } }
+</style>
+</head>
+<body>
+
+
+<div class="shell">
+
+  <header class="masthead">
+    <div>
+      <h1>YouTuber Marketing List</h1>
+      <p class="kicker">Grimoire Master &middot; Fire Rabbit Studio</p>
+    </div>
+    <div class="toolbar">
+      <span class="saver" id="saver">siap</span>
+      <button id="findBtn" class="primary">Cari Channel</button>
+      <button id="fetchBtn">Lengkapi Data</button>
+      <button id="scanBtn">Scan &amp; Tambah</button>
+      <button id="addBtn" class="ghost">+ Kosong</button>
+      <button id="openBtn" class="ghost">Buka&hellip;</button>
+      <button id="csvBtn" class="ghost">CSV</button>
+      <button id="saveBtn">Simpan</button>
+    </div>
+  </header>
+
+  <section class="stats" id="stats"></section>
+
+  <div class="split">
+    <aside class="pane">
+      <div class="listhead">
+        <input class="search" id="q" type="search" placeholder="Cari nama, handle, email, catatan&hellip;" aria-label="Cari channel">
+        <div class="chips" id="chips"></div>
+        <div class="sortrow">
+          <select class="sortsel" id="sort" aria-label="Urutkan">
+            <option value="none">Urutan asli</option>
+            <option value="subdesc">Sub terbanyak</option>
+            <option value="subasc">Sub tersedikit</option>
+            <option value="name">Nama A&ndash;Z</option>
+          </select>
+          <span class="count" id="count"></span>
+        </div>
+        <div class="rangerow">
+          <input class="rangein" id="minSub" type="number" min="0" step="1000" placeholder="min sub" aria-label="Subscriber minimum">
+          <span>&ndash;</span>
+          <input class="rangein" id="maxSub" type="number" min="0" step="1000" placeholder="max sub" aria-label="Subscriber maksimum">
+          <button id="bandBtn" title="Isi rentang 5.000&ndash;20.000">5k&ndash;20k</button>
+          <button id="bandClr" class="ghost" title="Kosongkan rentang" aria-label="Kosongkan rentang">&times;</button>
+        </div>
+      </div>
+      <div class="list" id="list" role="listbox" aria-label="Daftar channel"></div>
+    </aside>
+    <section class="pane" id="detail"></section>
+  </div>
+
+  <footer>
+    <p><b>Kenapa banyak baris yang kosong.</b> 124 dari 164 channel di sini baru punya nama dan link &mdash;
+    handle-nya asli, dari arsip komunitas, tapi subscriber dan negaranya belum pernah diverifikasi.
+    Tombol <b>Ambil Data YouTube</b> ngisi itu semua otomatis lewat API resmi YouTube. Sekali jalan, semua baris beres.</p>
+
+    <p><b>Satu file, satu sumber data.</b> Database-nya nempel di dalam <code>index.html</code> ini.
+    Tiap ketikan langsung kesimpen di browser. <b>Simpan</b> nulis ke satu file <code>youtuber-db.json</code>
+    yang kamu pilih sekali &mdash; klik berikutnya langsung nimpa file yang sama. Tombol <b>CSV</b> cuma buat ekspor ke Excel.</p>
+
+    <p><b>Scan &amp; Tambah</b> nerima URL, <code>@handle</code>, atau nama per baris. Yang udah ada dipisahin dari yang baru
+    jadi nggak bakal kembar &mdash; pembandingnya handle atau ID channel, bukan nama.</p>
+
+    <p><b>Nggak ada data bawaan.</b> Tool ini mulai kosong. Semua isinya kamu tarik sendiri lewat
+    <b>Cari Channel</b> &mdash; masukin judul game sejenis, dia nyari video setahun terakhir, ngambil channel yang bikin,
+    lalu narik subscriber, negara, dan deskripsi aslinya dari YouTube Data API v3. Tiap baris nyimpen kolom
+    <b>Sumber</b> jadi asal-usulnya selalu bisa dicek.</p>
+
+    <p><b>Filter rentang subscriber.</b> Isi <code>min sub</code> dan <code>max sub</code> buat nyaring ukuran channel,
+    atau klik <code>5k&ndash;20k</code> buat langsung ke rentang paling realistis buat dev kecil &mdash; penontonnya lebih niat
+    dan peluang dibales jauh lebih tinggi daripada channel gede. Filter ini cuma jalan buat baris yang datanya udah keisi,
+    jadi jalanin <b>Ambil Data YouTube</b> dulu.</p>
+
+    <p><b>Email tetap manual.</b> YouTube naruh alamat bisnis di balik CAPTCHA, jadi API pun nggak ngasih.
+    Buat pasar Mandarin, kreator game mayoritas ada di <b>Bilibili</b>, bukan YouTube.</p>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="fileIn" accept=".json,.csv" hidden>
+
+<script>
+(function () {
+  "use strict";
+
+  var STATUSES = [
+    ["Belum Dihubungi","s-neutral","d-"], ["Sudah Email","s-accent","d-accent"],
+    ["Dibales","s-good","d-good"], ["Tidak Dibales","s-warn","d-warn"],
+    ["Minta Bayaran","s-warn","d-warn"], ["Setuju Gratis","s-good","d-good"],
+    ["Sudah Main","s-good","d-good"], ["SIMPAN NANTI","s-neutral","d-"], ["SKIP","s-stop","d-stop"]
+  ];
+  var PAYS = [["Belum Tahu","s-neutral"], ["Tidak","s-good"], ["Ya","s-warn"]];
+  var CURRENCIES = ["","USD","EUR","GBP","IDR","CNY"];
+  var FIELDS = ["nama","link","sub","negara","fokus","sumber","email","status","followup","bayaran","harga","mata","catatan"];
+  var HEADERS = ["Nama Channel","Link Channel","Subscriber","Negara","Fokus Konten","Sumber","Email",
+                 "Status","Tanggal Follow-up","Minta Bayaran","Harga","Mata Uang","Catatan"];
+  var LS = "yt-marketing-db-v1", LS_KEY = "yt-marketing-apikey";
+
+  var rows = [], filter = "all", query = "", sortMode = "none", selected = null, fileHandle = null;
+  var minSub = null, maxSub = null;
+
+  var $list = document.getElementById("list"), $detail = document.getElementById("detail"),
+      $stats = document.getElementById("stats"), $chips = document.getElementById("chips"),
+      $count = document.getElementById("count"), $saver = document.getElementById("saver"),
+      $toast = document.getElementById("toast");
+
+  function el(t, c, a) {
+    var n = document.createElement(t);
+    if (c) n.className = c;
+    if (a) for (var k in a) n.setAttribute(k, a[k]);
+    return n;
+  }
+  var tTimer = null;
+  function toast(m) {
+    $toast.textContent = m; $toast.classList.add("on");
+    clearTimeout(tTimer); tTimer = setTimeout(function () { $toast.classList.remove("on"); }, 3600);
+  }
+  function flag(t, on) { $saver.textContent = t; $saver.setAttribute("data-on", on ? "1" : "0"); }
+  function num(v) { var n = parseFloat(String(v).replace(/[^0-9.\-]/g, "")); return isNaN(n) ? 0 : n; }
+  function fmt(n) { return n.toLocaleString("en-US"); }
+  function cls(list, v) { for (var i=0;i<list.length;i++) if (list[i][0]===v) return list[i][1]; return "s-neutral"; }
+  function dotOf(v) { for (var i=0;i<STATUSES.length;i++) if (STATUSES[i][0]===v) return STATUSES[i][2]; return "d-"; }
+  function isPrio(r) { return /PRIORITAS 1/i.test(r.catatan || ""); }
+  function hasData(r) { return String(r.sub || "").trim() !== ""; }
+
+  function blank() {
+    return { nama:"", link:"", sub:"", negara:"", fokus:"", sumber:"", email:"",
+             status:"Belum Dihubungi", followup:"", bayaran:"Belum Tahu",
+             harga:"", mata:"", catatan:"" };
+  }
+  function fromObj(o) {
+    var r = blank();
+    r.nama = o["Nama Channel"] || o.nama || "";
+    r.link = o["Link Channel"] || o.link || "";
+    r.sub = o["Subscriber"] || o.sub || "";
+    r.negara = o["Negara"] || o.negara || "";
+    r.fokus = o["Fokus Konten"] || o.fokus || "";
+    r.sumber = o["Sumber"] || o.sumber || "";
+    r.email = o["Email"] || o.email || "";
+    r.status = o["Status"] || o.status || "Belum Dihubungi";
+    r.followup = o["Tanggal Follow-up"] || o.followup || "";
+    r.bayaran = o["Minta Bayaran"] || o.bayaran || "Belum Tahu";
+    r.harga = o["Harga"] || o.harga || "";
+    r.mata = o["Mata Uang"] || o.mata || "";
+    r.catatan = o["Catatan"] || o.catatan || "";
+    return r;
+  }
+
+  function keyOf(r) {
+    var l = String(r.link || "").trim().toLowerCase();
+    var m = l.match(/(?:youtube\.com\/)?@([a-z0-9._\-]+)/);
+    if (m) return "@" + m[1];
+    m = l.match(/channel\/([a-z0-9_\-]+)/); if (m) return "id:" + m[1];
+    m = l.match(/\/(?:c|user)\/([a-z0-9._\-]+)/); if (m) return "c:" + m[1];
+    if (l) return "url:" + l.replace(/\/+$/, "");
+    return "nama:" + String(r.nama || "").trim().toLowerCase();
+  }
+  function keyset() { var s = {}; rows.forEach(function (r) { s[keyOf(r)] = true; }); return s; }
+
+  /* ---------- persist ---------- */
+
+  function writeLocal() { try { localStorage.setItem(LS, JSON.stringify(rows)); return true; } catch (e) { return false; } }
+  function readLocal() { try { var s = localStorage.getItem(LS); return s ? JSON.parse(s).map(fromObj) : null; } catch (e) { return null; } }
+  function touch() {
+    var ok = writeLocal();
+    flag(ok ? (fileHandle ? "belum disimpan ke file" : "tersimpan di browser") : "browser nolak simpan", !!fileHandle);
+  }
+  function idb(mode, fn) {
+    return new Promise(function (res) {
+      var rq; try { rq = indexedDB.open("yt-marketing-db", 1); } catch (e) { return res(null); }
+      rq.onupgradeneeded = function () { rq.result.createObjectStore("kv"); };
+      rq.onerror = function () { res(null); };
+      rq.onsuccess = function () {
+        try {
+          var st = rq.result.transaction("kv", mode).objectStore("kv");
+          var r = fn(st); if (!r) return res(null);
+          r.onsuccess = function () { res(r.result); };
+          r.onerror = function () { res(null); };
+        } catch (e) { res(null); }
+      };
+    });
+  }
+  function download(name, text, type) {
+    var b = new Blob([text], { type: type || "application/json" });
+    var u = URL.createObjectURL(b), a = document.createElement("a");
+    a.href = u; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(u); }, 1500);
+  }
+  function save() {
+    var text = JSON.stringify(rows, null, 2);
+    if (!window.showSaveFilePicker) {
+      download("youtuber-db.json", text);
+      toast("Browser ini nggak bisa nimpa file langsung — datanya diunduh."); flag("terunduh", false); return;
+    }
+    var go = fileHandle
+      ? fileHandle.queryPermission({ mode:"readwrite" }).then(function (p) {
+          return p === "granted" ? "granted" : fileHandle.requestPermission({ mode:"readwrite" });
+        }).then(function (p) { return p === "granted" ? fileHandle : null; })
+      : Promise.resolve(null);
+    go.then(function (h) {
+      if (h) return h;
+      return window.showSaveFilePicker({
+        suggestedName:"youtuber-db.json",
+        types:[{ description:"Database YouTuber", accept:{ "application/json":[".json"] } }]
+      }).then(function (nh) { fileHandle = nh; idb("readwrite", function (st) { return st.put(nh, "file"); }); return nh; });
+    }).then(function (h) {
+      return h.createWritable().then(function (w) { return w.write(text).then(function () { return w.close(); }); });
+    }).then(function () {
+      flag("tersimpan ke file", false);
+      toast("Tersimpan ke " + (fileHandle && fileHandle.name ? fileHandle.name : "file") + ".");
+    })["catch"](function (err) {
+      if (err && err.name === "AbortError") return;
+      download("youtuber-db.json", text);
+      toast("Nggak bisa nulis ke file — datanya diunduh aja.");
+    });
+  }
+
+  /* ---------- csv ---------- */
+
+  function esc(v) { v = v == null ? "" : String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }
+  function toCSV() {
+    var out = [HEADERS.join(",")];
+    rows.forEach(function (r) { out.push(FIELDS.map(function (f) { return esc(r[f]); }).join(",")); });
+    return "﻿" + out.join("\r\n");
+  }
+  function parseCSV(text) {
+    text = text.replace(/^﻿/, "");
+    var out = [], row = [], cur = "", q = false, i = 0;
+    while (i < text.length) {
+      var c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i+1] === '"') { cur += '"'; i += 2; continue; } q = false; i++; continue; }
+        cur += c; i++; continue;
+      }
+      if (c === '"') { q = true; i++; continue; }
+      if (c === ",") { row.push(cur); cur = ""; i++; continue; }
+      if (c === "\r") { i++; continue; }
+      if (c === "\n") { row.push(cur); out.push(row); row = []; cur = ""; i++; continue; }
+      cur += c; i++;
+    }
+    if (cur !== "" || row.length) { row.push(cur); out.push(row); }
+    if (!out.length) return [];
+    var head = out[0];
+    return out.slice(1).filter(function (r) { return r.some(function (v) { return v !== ""; }); })
+      .map(function (r) {
+        var o = {}; head.forEach(function (h, i2) { o[String(h).trim()] = r[i2] == null ? "" : r[i2]; });
+        return fromObj(o);
+      });
+  }
+  function merge(list) {
+    var have = keyset(), added = 0, skipped = 0;
+    list.forEach(function (r) {
+      var k = keyOf(r);
+      if (have[k]) { skipped++; return; }
+      have[k] = true; rows.push(r); added++;
+    });
+    return { added:added, skipped:skipped };
+  }
+
+  function openFile() {
+    if (window.showOpenFilePicker) {
+      window.showOpenFilePicker({ types:[{ description:"Database", accept:{ "application/json":[".json"], "text/csv":[".csv"] } }] })
+        .then(function (hs) {
+          var h = hs[0];
+          return h.getFile().then(function (f) { return f.text().then(function (t) { intake(f.name, t, h); }); });
+        })["catch"](function (e) { if (e && e.name !== "AbortError") toast("Gagal buka file itu."); });
+    } else { document.getElementById("fileIn").click(); }
+  }
+  function intake(name, text, handle) {
+    try {
+      var isCsv = /\.csv$/i.test(name);
+      var list = isCsv ? parseCSV(text) : JSON.parse(text).map(fromObj);
+      if (!list.length) { toast("File-nya kosong atau formatnya nggak kebaca."); return; }
+      if (isCsv) {
+        var m = merge(list);
+        toast(m.added + " baru ditambah, " + m.skipped + " duplikat dilewati.");
+      } else {
+        rows = list;
+        if (handle) { fileHandle = handle; idb("readwrite", function (st) { return st.put(handle, "file"); }); }
+        toast(list.length + " baris dimuat dari " + name + ".");
+      }
+      selected = null; touch(); renderAll();
+    } catch (e) { toast("File-nya nggak kebaca."); }
+  }
+  document.getElementById("fileIn").addEventListener("change", function (e) {
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () { intake(f.name, String(rd.result), null); };
+    rd.readAsText(f); e.target.value = "";
+  });
+
+  /* ---------- sheet helper ---------- */
+
+  function sheet(build) {
+    var back = el("div", "sheet"), box = el("div", "sheetbox");
+    function close() { if (back.parentNode) document.body.removeChild(back); window.removeEventListener("keydown", onKey); }
+    function onKey(e) { if (e.key === "Escape") close(); }
+    back.addEventListener("click", function (e) { if (e.target === back) close(); });
+    window.addEventListener("keydown", onKey);
+    build(box, close);
+    back.appendChild(box); document.body.appendChild(back);
+    return close;
+  }
+
+  /* ---------- YouTube Data API ---------- */
+
+  var API = "https://www.googleapis.com/youtube/v3/channels";
+
+  function apiKey() { try { return localStorage.getItem(LS_KEY) || ""; } catch (e) { return ""; } }
+  function setApiKey(k) { try { localStorage.setItem(LS_KEY, k); } catch (e) {} }
+
+  function askKey(then) {
+    sheet(function (box, close) {
+      var h = el("h2"); h.textContent = "API key YouTube";
+      var p1 = el("p");
+      p1.innerHTML = 'Buat key gratis di <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Google Cloud Console</a> &rarr; aktifkan <b>YouTube Data API v3</b> &rarr; Create credentials &rarr; API key. Nggak perlu kartu kredit. Kuotanya 10.000 unit/hari; ngisi 164 channel cuma makan ~164 unit.';
+      var p2 = el("p");
+      p2.textContent = "Key-nya disimpan cuma di browser ini, nggak dikirim ke mana-mana selain ke Google.";
+      var inp = el("input", "in mono", { type:"password", placeholder:"AIza…", "aria-label":"API key" });
+      inp.value = apiKey();
+      var foot = el("div", "sheetfoot");
+      var c = el("button", "ghost"); c.textContent = "Batal";
+      var ok = el("button", "primary"); ok.textContent = "Simpan & lanjut";
+      c.addEventListener("click", close);
+      ok.addEventListener("click", function () {
+        var v = inp.value.trim();
+        if (!v) { toast("Key-nya masih kosong."); return; }
+        setApiKey(v); close(); then(v);
+      });
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") ok.click(); });
+      foot.appendChild(c); foot.appendChild(ok);
+      box.appendChild(h); box.appendChild(p1); box.appendChild(p2); box.appendChild(inp); box.appendChild(foot);
+      setTimeout(function () { inp.focus(); }, 30);
+    });
+  }
+
+  function chunk(a, n) { var o = []; for (var i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; }
+
+  function applyChannel(r, item) {
+    var sn = item.snippet || {}, st = item.statistics || {};
+    if (sn.title) r.nama = sn.title;
+    if (st.subscriberCount != null) r.sub = String(st.subscriberCount);
+    else r.sub = r.sub || "tersembunyi";
+    if (sn.country) r.negara = sn.country;
+    if (!String(r.fokus || "").trim() || r.fokus === "Indie (variety)") {
+      var d = String(sn.description || "").replace(/\s+/g, " ").trim();
+      if (d) r.fokus = d.slice(0, 90);
+    }
+    if (sn.customUrl) r.link = "https://www.youtube.com/" + (sn.customUrl.charAt(0) === "@" ? sn.customUrl : "@" + sn.customUrl);
+    var n = num(r.sub);
+    var tag = n > 200000 ? "DI ATAS 200k" : "";
+    var base = String(r.catatan || "").replace(/Arsip itch\.io - sub & fokus BELUM dicek/i, "").replace(/Ditambah lewat Scan - belum diverifikasi/i, "").trim();
+    r.sumber = "YouTube Data API v3";
+    var stamp = "Data YouTube API " + new Date().toISOString().slice(0,10);
+    r.catatan = [base, tag, stamp].filter(Boolean).join(" · ");
+    if (n > 200000 && r.status === "Belum Dihubungi") r.status = "SIMPAN NANTI";
+  }
+
+  function runFetch(key) {
+    var targets = rows.filter(function (r) { return keyOf(r).charAt(0) === "@" || keyOf(r).indexOf("id:") === 0; });
+    if (!targets.length) { toast("Nggak ada baris yang punya handle atau ID channel."); return; }
+
+    sheet(function (box, close) {
+      var h = el("h2"); h.textContent = "Ambil data dari YouTube";
+      var p = el("p");
+      p.textContent = targets.length + " channel bakal diperiksa. Subscriber, negara, nama resmi, dan deskripsi bakal diisi otomatis. Email nggak ada di API — itu tetap manual.";
+      var bar = el("div", "bar"); var fill = el("i"); bar.appendChild(fill);
+      var log = el("div", "log");
+      var foot = el("div", "sheetfoot");
+      var stopBtn = el("button", "ghost"); stopBtn.textContent = "Tutup";
+      var goBtn = el("button", "primary"); goBtn.textContent = "Mulai";
+      foot.appendChild(stopBtn); foot.appendChild(goBtn);
+      box.appendChild(h); box.appendChild(p); box.appendChild(bar); box.appendChild(log); box.appendChild(foot);
+
+      var cancelled = false;
+      stopBtn.addEventListener("click", function () { cancelled = true; close(); });
+
+      function say(msg, kind) {
+        var d = el("div");
+        if (kind) { var t = el(kind); t.textContent = msg; d.appendChild(t); }
+        else d.textContent = msg;
+        log.appendChild(d); log.scrollTop = log.scrollHeight;
+      }
+
+      goBtn.addEventListener("click", function () {
+        goBtn.disabled = true;
+        var done = 0, ok = 0, fail = 0;
+        var byId = targets.filter(function (r) { return keyOf(r).indexOf("id:") === 0; });
+        var byHandle = targets.filter(function (r) { return keyOf(r).charAt(0) === "@"; });
+
+        function step() { done++; fill.style.width = Math.round(done / targets.length * 100) + "%"; }
+
+        function fatal(body) {
+          var e = body && body.error;
+          var reason = e && e.errors && e.errors[0] ? e.errors[0].reason : "";
+          if (reason === "quotaExceeded") { say("Kuota API habis buat hari ini. Lanjut besok.", "i"); return true; }
+          if (reason === "keyInvalid" || (e && e.code === 400)) { say("API key ditolak. Cek lagi key-nya.", "i"); return true; }
+          if (e && e.code === 403) { say("Akses ditolak (403). Pastikan YouTube Data API v3 udah diaktifkan.", "i"); return true; }
+          return false;
+        }
+
+        function get(url) {
+          return fetch(url).then(function (res) {
+            return res.json().then(function (body) { return { ok:res.ok, body:body }; });
+          });
+        }
+
+        function doIds() {
+          var groups = chunk(byId, 50), gi = 0;
+          function next() {
+            if (cancelled || gi >= groups.length) return Promise.resolve();
+            var g = groups[gi++];
+            var ids = g.map(function (r) { return keyOf(r).slice(3); }).join(",");
+            return get(API + "?part=snippet,statistics&id=" + encodeURIComponent(ids) + "&key=" + encodeURIComponent(key))
+              .then(function (res) {
+                if (!res.ok) { if (fatal(res.body)) { cancelled = true; return; } g.forEach(function () { fail++; step(); }); return next(); }
+                var map = {};
+                (res.body.items || []).forEach(function (it) { map[it.id] = it; });
+                g.forEach(function (r) {
+                  var it = map[keyOf(r).slice(3)];
+                  if (it) { applyChannel(r, it); ok++; } else { fail++; }
+                  step();
+                });
+                renderAll();
+                return next();
+              });
+          }
+          return next();
+        }
+
+        function doHandles() {
+          var i = 0;
+          function worker() {
+            if (cancelled || i >= byHandle.length) return Promise.resolve();
+            var r = byHandle[i++];
+            var handle = keyOf(r);
+            return get(API + "?part=snippet,statistics&forHandle=" + encodeURIComponent(handle) + "&key=" + encodeURIComponent(key))
+              .then(function (res) {
+                if (!res.ok) { if (fatal(res.body)) { cancelled = true; return; } fail++; say(handle + " — gagal", "i"); }
+                else {
+                  var it = (res.body.items || [])[0];
+                  if (it) { applyChannel(r, it); ok++; say(handle + " → " + fmt(num(r.sub)) + " sub" + (r.negara ? " · " + r.negara : ""), "b"); }
+                  else { fail++; say(handle + " — nggak ketemu", "i"); }
+                }
+                step();
+                if (ok % 10 === 0) renderAll();
+                return worker();
+              })["catch"](function () {
+                fail++; say(handle + " — koneksi gagal", "i"); step(); return worker();
+              });
+          }
+          var lanes = [];
+          for (var w = 0; w < 4; w++) lanes.push(worker());
+          return Promise.all(lanes);
+        }
+
+        say("Mulai — " + targets.length + " channel.");
+        doIds().then(doHandles).then(function () {
+          touch(); renderAll();
+          say("Selesai. " + ok + " berhasil, " + fail + " gagal.", "b");
+          goBtn.disabled = false; goBtn.textContent = "Ulangi";
+          stopBtn.textContent = "Tutup";
+          toast(ok + " channel keisi datanya. Jangan lupa klik Simpan.");
+        })["catch"](function () {
+          say("Berhenti karena error jaringan. Kalau kamu buka file ini lewat dobel-klik (file://), browser mungkin blokir panggilan API — taruh di server atau jalanin lewat localhost.", "i");
+          goBtn.disabled = false;
+        });
+      });
+    });
+  }
+
+  var SEARCH = "https://www.googleapis.com/youtube/v3/search";
+
+  function openFind(key) {
+    sheet(function (box, close) {
+      var h2 = el("h2"); h2.textContent = "Cari channel lewat judul game";
+      var p = el("p");
+      p.textContent = "Masukin judul game yang mirip punyamu, satu per baris. Tool ini nyari video setahun terakhir, ngambil channel yang bikin, terus narik subscriber aslinya dari API resmi. Semua datanya dari YouTube \u2014 nggak ada yang dikarang.";
+      var ta = el("textarea", "in", { rows:"5", placeholder:"Halls of Torment\nBrotato\nBackpack Battles\nSoulstone Survivors" });
+
+      var rng = el("div", "rangerow");
+      var mn = el("input", "rangein", { type:"number", min:"0", step:"1000", placeholder:"min sub", "aria-label":"Subscriber minimum" });
+      var mx = el("input", "rangein", { type:"number", min:"0", step:"1000", placeholder:"max sub", "aria-label":"Subscriber maksimum" });
+      mn.value = "5000"; mx.value = "20000";
+      var dash = el("span"); dash.textContent = "\u2013";
+      rng.appendChild(mn); rng.appendChild(dash); rng.appendChild(mx);
+
+      var bar = el("div", "bar"); var fill = el("i"); bar.appendChild(fill);
+      var log = el("div", "log");
+      var out = el("div"); out.style.display = "flex"; out.style.flexDirection = "column"; out.style.gap = "10px";
+      var foot = el("div", "sheetfoot");
+      var cbtn = el("button", "ghost"); cbtn.textContent = "Tutup";
+      var go = el("button"); go.textContent = "Cari";
+      var add = el("button", "primary"); add.textContent = "Tambah"; add.disabled = true;
+      foot.appendChild(cbtn); foot.appendChild(go); foot.appendChild(add);
+      cbtn.addEventListener("click", close);
+
+      function say(m, kind) {
+        var d = el("div");
+        if (kind) { var t = el(kind); t.textContent = m; d.appendChild(t); } else d.textContent = m;
+        log.appendChild(d); log.scrollTop = log.scrollHeight;
+      }
+      function get(u) {
+        return fetch(u).then(function (r) { return r.json().then(function (b) { return { ok:r.ok, body:b }; }); });
+      }
+      function fatal(b) {
+        var e = b && b.error, rs = e && e.errors && e.errors[0] ? e.errors[0].reason : "";
+        if (rs === "quotaExceeded") { say("Kuota API habis buat hari ini. Tiap pencarian makan 100 unit dari jatah 10.000/hari.", "i"); return true; }
+        if (rs === "keyInvalid") { say("API key ditolak. Cek lagi key-nya.", "i"); return true; }
+        if (e && e.code === 403) { say("Akses ditolak. Pastikan YouTube Data API v3 udah diaktifkan.", "i"); return true; }
+        return false;
+      }
+      function bucket(kind, title, items) {
+        var b = el("div", "bucket " + kind);
+        var t = el("h3"); t.textContent = title + " (" + items.length + ")";
+        b.appendChild(t);
+        if (items.length) {
+          var ul = el("ul");
+          items.slice(0, 60).forEach(function (r) {
+            var li = el("li");
+            li.textContent = fmt(num(r.sub)) + "  \u00b7  " + r.nama + (r.negara ? "  \u00b7  " + r.negara : "");
+            ul.appendChild(li);
+          });
+          if (items.length > 60) { var l2 = el("li"); l2.textContent = "\u2026dan " + (items.length - 60) + " lagi"; ul.appendChild(l2); }
+          b.appendChild(ul);
+        }
+        return b;
+      }
+
+      var pending = [];
+
+      go.addEventListener("click", function () {
+        var titles = ta.value.split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean);
+        if (!titles.length) { toast("Judul game-nya masih kosong."); return; }
+        go.disabled = true; add.disabled = true;
+        out.textContent = ""; log.textContent = ""; pending = [];
+
+        var lo = mn.value.trim() === "" ? null : num(mn.value);
+        var hi = mx.value.trim() === "" ? null : num(mx.value);
+        var since = new Date(Date.now() - 365 * 24 * 3600 * 1000).toISOString();
+        var ids = {}, step = 0, totalSteps = titles.length + 1;
+        function tick() { step++; fill.style.width = Math.round(step / totalSteps * 100) + "%"; }
+
+        function searchOne(i) {
+          if (i >= titles.length) return Promise.resolve();
+          var q = titles[i];
+          say("Nyari \u201c" + q + "\u201d\u2026");
+          return get(SEARCH + "?part=snippet&type=video&maxResults=50&order=relevance&publishedAfter=" +
+                     encodeURIComponent(since) + "&q=" + encodeURIComponent(q) +
+                     "&key=" + encodeURIComponent(key))
+            .then(function (res) {
+              if (!res.ok) { if (fatal(res.body)) throw new Error("stop"); say("  gagal", "i"); tick(); return searchOne(i + 1); }
+              var n = 0;
+              (res.body.items || []).forEach(function (it) {
+                var cid = it.snippet && it.snippet.channelId;
+                if (cid && !ids[cid]) { ids[cid] = true; n++; }
+              });
+              say("  " + n + " channel baru ketemu", "b");
+              tick(); return searchOne(i + 1);
+            });
+        }
+
+        searchOne(0).then(function () {
+          var all = Object.keys(ids);
+          if (!all.length) { say("Nggak ada channel yang ketemu.", "i"); go.disabled = false; return; }
+          say("Narik statistik " + all.length + " channel\u2026");
+          var groups = chunk(all, 50), gi = 0, got = [];
+          function nextG() {
+            if (gi >= groups.length) return Promise.resolve();
+            var g = groups[gi++];
+            return get(API + "?part=snippet,statistics&id=" + encodeURIComponent(g.join(",")) +
+                       "&key=" + encodeURIComponent(key))
+              .then(function (res) {
+                if (!res.ok) { if (fatal(res.body)) throw new Error("stop"); return nextG(); }
+                (res.body.items || []).forEach(function (it) { got.push(it); });
+                return nextG();
+              });
+          }
+          return nextG().then(function () {
+            tick();
+            var have = keyset(), fresh = [], dup = [], outside = [];
+            got.forEach(function (it) {
+              var r = blank();
+              r.link = "https://www.youtube.com/channel/" + it.id;
+              applyChannel(r, it);
+              r.sumber = "YouTube Data API v3 (pencarian)";
+              r.catatan = "Ketemu lewat pencarian judul game \u00b7 " + r.catatan;
+              var n = num(r.sub);
+              if ((lo !== null && n < lo) || (hi !== null && n > hi)) { outside.push(r); return; }
+              (have[keyOf(r)] ? dup : fresh).push(r);
+            });
+            fresh.sort(function (a, b) { return num(b.sub) - num(a.sub); });
+            pending = fresh;
+            out.textContent = "";
+            out.appendChild(bucket("new", "Masuk rentang & belum ada \u2014 bakal ditambah", fresh));
+            out.appendChild(bucket("dupe", "Udah ada di database \u2014 dilewati", dup));
+            out.appendChild(bucket("", "Di luar rentang subscriber", outside));
+            add.disabled = fresh.length === 0;
+            add.textContent = "Tambah " + fresh.length + " channel";
+            go.disabled = false; go.textContent = "Cari lagi";
+            say("Selesai.", "b");
+          });
+        })["catch"](function (e) {
+          go.disabled = false;
+          if (!e || e.message !== "stop") {
+            say("Berhenti karena error jaringan. Kalau file ini dibuka lewat dobel-klik (file://), browser bisa blokir panggilan API \u2014 taruh di server atau jalanin lewat localhost.", "i");
+          }
+        });
+      });
+
+      add.addEventListener("click", function () {
+        if (!pending.length) return;
+        var m = merge(pending); touch(); renderAll();
+        toast(m.added + " channel ditambah dari YouTube. " + m.skipped + " duplikat dilewati.");
+        close();
+      });
+
+      box.appendChild(h2); box.appendChild(p); box.appendChild(ta); box.appendChild(rng);
+      box.appendChild(bar); box.appendChild(log); box.appendChild(out); box.appendChild(foot);
+      setTimeout(function () { ta.focus(); }, 30);
+    });
+  }
+
+  document.getElementById("findBtn").addEventListener("click", function () {
+    var k = apiKey();
+    if (k) openFind(k); else askKey(openFind);
+  });
+
+  document.getElementById("fetchBtn").addEventListener("click", function () {
+    var k = apiKey();
+    if (k) runFetch(k); else askKey(runFetch);
+  });
+
+  /* ---------- scan & tambah ---------- */
+
+  function parseScan(text) {
+    var found = [], seen = {};
+    text.split(/[\n,;]+/).forEach(function (raw) {
+      var s = raw.trim(); if (!s) return;
+      var link = "", nama = "", m = s.match(/https?:\/\/[^\s]+/);
+      if (m) {
+        link = m[0].replace(/[),.]+$/, "");
+        var hm = link.match(/@([A-Za-z0-9._\-]+)/);
+        nama = hm ? hm[1] : link.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
+      } else if (/^@[A-Za-z0-9._\-]+$/.test(s)) {
+        nama = s.slice(1); link = "https://www.youtube.com/" + s;
+      } else if (/^[A-Za-z0-9._\- ]{2,60}$/.test(s)) { nama = s; }
+      else return;
+      var r = blank();
+      r.nama = nama; r.link = link;
+      r.catatan = "Ditambah lewat Scan - belum diverifikasi";
+      var k = keyOf(r);
+      if (seen[k]) return;
+      seen[k] = true; found.push(r);
+    });
+    return found;
+  }
+
+  function openScan() {
+    sheet(function (box, close) {
+      var h = el("h2"); h.textContent = "Scan & Tambah";
+      var p = el("p");
+      p.textContent = "Tempel apa aja: URL YouTube, @handle, atau nama channel satu per baris. Yang udah ada di database bakal dipisahin sendiri, jadi nggak bakal kembar.";
+      var ta = el("textarea", "in", { rows:"7", placeholder:"https://www.youtube.com/@contoh\n@channelkedua\nNama Channel Ketiga" });
+      var out = el("div"); out.style.display = "flex"; out.style.flexDirection = "column"; out.style.gap = "10px";
+      var foot = el("div", "sheetfoot");
+      var c = el("button", "ghost"); c.textContent = "Tutup";
+      var chk = el("button"); chk.textContent = "Periksa";
+      var add = el("button", "primary"); add.textContent = "Tambah yang baru"; add.disabled = true;
+      foot.appendChild(c); foot.appendChild(chk); foot.appendChild(add);
+      c.addEventListener("click", close);
+
+      var pending = [];
+      function bucket(kind, title, items) {
+        var b = el("div", "bucket " + kind);
+        var t = el("h3"); t.textContent = title + " (" + items.length + ")";
+        b.appendChild(t);
+        if (items.length) {
+          var ul = el("ul");
+          items.slice(0, 60).forEach(function (r) {
+            var li = el("li"); li.textContent = r.nama + (r.link ? "  ·  " + keyOf(r) : ""); ul.appendChild(li);
+          });
+          if (items.length > 60) { var li2 = el("li"); li2.textContent = "…dan " + (items.length-60) + " lagi"; ul.appendChild(li2); }
+          b.appendChild(ul);
+        }
+        return b;
+      }
+      chk.addEventListener("click", function () {
+        var parsed = parseScan(ta.value), have = keyset(), fresh = [], dup = [];
+        parsed.forEach(function (r) { (have[keyOf(r)] ? dup : fresh).push(r); });
+        pending = fresh; out.textContent = "";
+        if (!parsed.length) { var n = el("p"); n.textContent = "Nggak ada yang kebaca dari tempelan itu."; out.appendChild(n); add.disabled = true; return; }
+        out.appendChild(bucket("new", "Baru — bakal ditambah", fresh));
+        out.appendChild(bucket("dupe", "Udah ada — dilewati", dup));
+        add.disabled = fresh.length === 0;
+      });
+      add.addEventListener("click", function () {
+        if (!pending.length) return;
+        var m = merge(pending); touch(); renderAll();
+        toast(m.added + " channel baru ditambah, " + m.skipped + " duplikat dilewati.");
+        close();
+      });
+      box.appendChild(h); box.appendChild(p); box.appendChild(ta); box.appendChild(out); box.appendChild(foot);
+      setTimeout(function () { ta.focus(); }, 30);
+    });
+  }
+
+  /* ---------- filter & render ---------- */
+
+  var FILTERS = [
+    ["all","Semua"], ["nodata","Perlu Dicek"], ["estim","Estimasi"], ["prio","Prioritas"], ["email","Ada Email"],
+    ["todo","Belum"], ["sent","Terkirim"], ["reply","Dibales"], ["paid","Bayaran"]
+  ];
+  function inBand(r) {
+    if (minSub === null && maxSub === null) return true;
+    if (!hasData(r)) return false;
+    var n = num(r.sub);
+    if (minSub !== null && n < minSub) return false;
+    if (maxSub !== null && n > maxSub) return false;
+    return true;
+  }
+  function bandCount() {
+    var c = 0;
+    rows.forEach(function (r) {
+      if (!hasData(r)) return;
+      var n = num(r.sub);
+      if (n >= 5000 && n <= 20000) c++;
+    });
+    return c;
+  }
+  function match(r) {
+    if (!inBand(r)) return false;
+    if (filter === "nodata" && hasData(r)) return false;
+    if (filter === "estim" && !/Estimasi/i.test(r.sumber || "")) return false;
+    if (filter === "prio"  && !isPrio(r)) return false;
+    if (filter === "email" && !String(r.email || "").trim()) return false;
+    if (filter === "todo"  && r.status !== "Belum Dihubungi") return false;
+    if (filter === "sent"  && r.status !== "Sudah Email") return false;
+    if (filter === "reply" && r.status !== "Dibales") return false;
+    if (filter === "paid"  && r.bayaran !== "Ya") return false;
+    if (query) {
+      var hay = (r.nama+" "+r.email+" "+r.catatan+" "+r.fokus+" "+r.negara+" "+r.link+" "+r.sumber).toLowerCase();
+      if (hay.indexOf(query) === -1) return false;
+    }
+    return true;
+  }
+  function visible() {
+    var l = rows.filter(match);
+    if (sortMode === "subdesc") l.sort(function (a,b) { return num(b.sub) - num(a.sub); });
+    else if (sortMode === "subasc") l.sort(function (a,b) { return num(a.sub) - num(b.sub); });
+    else if (sortMode === "name") l.sort(function (a,b) { return String(a.nama).localeCompare(String(b.nama)); });
+    return l;
+  }
+
+  function renderList() {
+    var l = visible();
+    $list.textContent = "";
+    $count.textContent = l.length + " / " + rows.length;
+    if (!l.length) {
+      var e = el("div", "blank"); var s = el("strong");
+      if (!rows.length) {
+        s.textContent = "Database masih kosong";
+        e.appendChild(s);
+        e.appendChild(document.createTextNode("Klik Cari Channel, masukin judul game yang mirip punyamu, dan tool ini narik channel yang beneran pernah mainin game itu \u2014 lengkap sama subscriber aslinya."));
+      } else {
+        s.textContent = "Kosong";
+        e.appendChild(s);
+        e.appendChild(document.createTextNode("Nggak ada yang cocok sama filter ini."));
+      }
+      $list.appendChild(e); return;
+    }
+    l.forEach(function (r) {
+      var c = ["item"];
+      if (isPrio(r)) c.push("prio");
+      if (r.status === "SKIP" || r.status === "SIMPAN NANTI") c.push("dim");
+      var b = el("button", c.join(" "), { role:"option", "aria-current": String(r === selected) });
+      var st = el("div", "istack");
+      var n = el("div", "iname"); n.textContent = r.nama || "(tanpa nama)";
+      var mt = el("div", "imeta"); mt.textContent = keyOf(r) + (r.negara ? " · " + r.negara : "");
+      st.appendChild(n); st.appendChild(mt);
+      var sub = el("div", hasData(r) ? "isub" : "isub unknown");
+      sub.textContent = hasData(r) ? (num(r.sub) ? fmt(num(r.sub)) : r.sub) : "belum dicek";
+      var dot = el("span", "dot " + dotOf(r.status), { title:r.status });
+      b.appendChild(st); b.appendChild(sub); b.appendChild(dot);
+      b.addEventListener("click", function () { selected = r; renderList(); renderDetail(); });
+      $list.appendChild(b);
+    });
+  }
+
+  function field(label, node) {
+    var f = el("div", "field"), l = el("label");
+    l.textContent = label; f.appendChild(l); f.appendChild(node); return f;
+  }
+  function bind(r, key, node, after) {
+    node.value = r[key] == null ? "" : r[key];
+    node.addEventListener("input", function () { r[key] = node.value; touch(); if (after) after(); });
+    return node;
+  }
+
+  function renderDetail() {
+    $detail.textContent = "";
+    var r = selected;
+    if (!r) {
+      var e = el("div", "blank"); var s = el("strong"); s.textContent = "Belum ada yang dipilih";
+      e.appendChild(s); e.appendChild(document.createTextNode("Klik salah satu channel di kiri buat mulai ngisi."));
+      $detail.appendChild(e); return;
+    }
+    var head = el("div", "dhead"), grow = el("div", "grow");
+    var nameIn = el("input", "dname", { placeholder:"Nama channel", "aria-label":"Nama channel" });
+    var linkIn = el("input", "dlink", { placeholder:"https://www.youtube.com/@…", "aria-label":"Link channel" });
+    var go = el("a", "go", { target:"_blank", rel:"noopener noreferrer" });
+    go.textContent = "Buka ↗"; go.href = r.link || "#";
+    bind(r, "nama", nameIn, renderList);
+    bind(r, "link", linkIn, function () { go.href = r.link || "#"; renderList(); });
+    grow.appendChild(nameIn); grow.appendChild(linkIn);
+    head.appendChild(grow); head.appendChild(go);
+
+    var body = el("div", "dbody");
+    var g1 = el("div", "grid2");
+    g1.appendChild(field("Subscriber", bind(r, "sub", el("input", "in num mono", { placeholder:"belum dicek" }), renderList)));
+    g1.appendChild(field("Negara", bind(r, "negara", el("input", "in mono", { placeholder:"—" }), renderList)));
+    body.appendChild(g1);
+    body.appendChild(field("Fokus konten", bind(r, "fokus", el("input", "in", { placeholder:"—" }))));
+    body.appendChild(field("Sumber data", bind(r, "sumber", el("input", "in mono", { placeholder:"belum dicatat" }), renderList)));
+    body.appendChild(field("Email", bind(r, "email", el("input", "in mono", { type:"email", placeholder:"belum dicari" }), renderStats)));
+
+    var g2 = el("div", "grid2");
+    var stSel = el("select", "in " + cls(STATUSES, r.status));
+    STATUSES.forEach(function (o) {
+      var op = el("option"); op.value = o[0]; op.textContent = o[0];
+      if (o[0] === r.status) op.selected = true; stSel.appendChild(op);
+    });
+    stSel.addEventListener("change", function () {
+      r.status = stSel.value; stSel.className = "in " + cls(STATUSES, r.status);
+      touch(); renderList(); renderStats();
+    });
+    g2.appendChild(field("Status", stSel));
+    g2.appendChild(field("Tanggal follow-up", bind(r, "followup", el("input", "in mono", { type:"date" }))));
+    body.appendChild(g2);
+
+    var g3 = el("div", "grid2");
+    var paySel = el("select", "in " + cls(PAYS, r.bayaran));
+    PAYS.forEach(function (o) {
+      var op = el("option"); op.value = o[0]; op.textContent = o[0];
+      if (o[0] === r.bayaran) op.selected = true; paySel.appendChild(op);
+    });
+    paySel.addEventListener("change", function () {
+      r.bayaran = paySel.value; paySel.className = "in " + cls(PAYS, r.bayaran); touch(); renderStats();
+    });
+    g3.appendChild(field("Minta bayaran", paySel));
+    var money = el("div", "money");
+    money.appendChild(bind(r, "harga", el("input", "in num mono", { placeholder:"0", inputmode:"decimal" }), renderStats));
+    var curSel = el("select", "in mono");
+    CURRENCIES.forEach(function (c) {
+      var op = el("option"); op.value = c; op.textContent = c || "—";
+      if (c === r.mata) op.selected = true; curSel.appendChild(op);
+    });
+    curSel.addEventListener("change", function () { r.mata = curSel.value; touch(); renderStats(); });
+    money.appendChild(curSel);
+    g3.appendChild(field("Harga", money));
+    body.appendChild(g3);
+
+    body.appendChild(field("Catatan", bind(r, "catatan", el("textarea", "in", { placeholder:"—" }), renderList)));
+
+    var foot = el("div", "drow");
+    var key = el("span", "count"); key.textContent = "kunci unik: " + keyOf(r);
+    var del = el("button", "kill"); del.textContent = "Hapus channel ini";
+    del.addEventListener("click", function () {
+      var i = rows.indexOf(r);
+      if (i > -1) { rows.splice(i,1); selected = null; touch(); renderAll(); toast("Channel dihapus."); }
+    });
+    foot.appendChild(key); foot.appendChild(del);
+    body.appendChild(foot);
+    $detail.appendChild(head); $detail.appendChild(body);
+  }
+
+  function renderStats() {
+    var total = rows.length, nodata = 0, mail = 0, contacted = 0, replied = 0, paid = 0, money = {};
+    rows.forEach(function (r) {
+      if (!hasData(r)) nodata++;
+      if (String(r.email || "").trim()) mail++;
+      if (r.status !== "Belum Dihubungi" && r.status !== "SKIP" && r.status !== "SIMPAN NANTI") contacted++;
+      if (r.status === "Dibales" || r.status === "Setuju Gratis" || r.status === "Sudah Main") replied++;
+      if (r.bayaran === "Ya") {
+        paid++;
+        var h = num(r.harga);
+        if (h > 0) { var c = r.mata || "?"; money[c] = (money[c] || 0) + h; }
+      }
+    });
+    var bill = Object.keys(money).map(function (c) { return c + " " + fmt(money[c]); }).join("  ·  ") || "—";
+    $stats.textContent = "";
+    function card(lab, val, sub, alert) {
+      var d = el("div", "stat" + (alert ? " alert" : ""));
+      var l = el("div", "lab"); l.textContent = lab;
+      var v = el("div", "val"); v.textContent = val;
+      if (sub) { var s = el("small"); s.textContent = sub; v.appendChild(s); }
+      d.appendChild(l); d.appendChild(v); $stats.appendChild(d);
+    }
+    card("Total channel", total, "");
+    card("Belum ada data", nodata, total ? " / " + total : "", nodata > 0);
+    card("Rentang 5k–20k", bandCount(), "");
+    card("Punya email", mail, total ? " / " + total : "");
+    card("Sudah dihubungi", contacted, "");
+    card("Dapat balasan", replied, "");
+    var m = el("div", "stat money");
+    var ml = el("div", "lab"); ml.textContent = "Total tagihan";
+    var mv = el("div", "val"); mv.textContent = bill;
+    m.appendChild(ml); m.appendChild(mv); $stats.appendChild(m);
+  }
+
+  function renderChips() {
+    $chips.textContent = "";
+    FILTERS.forEach(function (f) {
+      var b = el("button", "chip", { "aria-pressed": String(filter === f[0]) });
+      b.textContent = f[1];
+      b.addEventListener("click", function () { filter = f[0]; renderChips(); renderList(); });
+      $chips.appendChild(b);
+    });
+  }
+  function renderAll() { renderChips(); renderList(); renderDetail(); renderStats(); }
+
+  /* ---------- wiring ---------- */
+
+  document.getElementById("saveBtn").addEventListener("click", save);
+  document.getElementById("openBtn").addEventListener("click", openFile);
+  document.getElementById("scanBtn").addEventListener("click", openScan);
+  document.getElementById("csvBtn").addEventListener("click", function () {
+    download("youtuber-list.csv", toCSV(), "text/csv;charset=utf-8");
+    toast("CSV diunduh — buat Excel aja, bukan tempat nyimpan.");
+  });
+  document.getElementById("addBtn").addEventListener("click", function () {
+    var r = blank(); rows.unshift(r); selected = r;
+    filter = "all"; query = ""; sortMode = "none";
+    document.getElementById("q").value = "";
+    document.getElementById("sort").value = "none";
+    touch(); renderAll();
+    var f = $detail.querySelector(".dname"); if (f) f.focus();
+  });
+  var $min = document.getElementById("minSub"), $max = document.getElementById("maxSub"),
+      $band = document.getElementById("bandBtn");
+  function readRange() {
+    var a = $min.value.trim(), b = $max.value.trim();
+    minSub = a === "" ? null : num(a);
+    maxSub = b === "" ? null : num(b);
+    $band.className = (minSub === 5000 && maxSub === 20000) ? "on" : "";
+    renderList();
+  }
+  $min.addEventListener("input", readRange);
+  $max.addEventListener("input", readRange);
+  $band.addEventListener("click", function () {
+    if (minSub === 5000 && maxSub === 20000) { $min.value = ""; $max.value = ""; }
+    else { $min.value = "5000"; $max.value = "20000"; }
+    readRange();
+  });
+  document.getElementById("bandClr").addEventListener("click", function () {
+    $min.value = ""; $max.value = ""; readRange();
+  });
+  document.getElementById("q").addEventListener("input", function (e) { query = e.target.value.trim().toLowerCase(); renderList(); });
+  document.getElementById("sort").addEventListener("change", function (e) { sortMode = e.target.value; renderList(); });
+  window.addEventListener("keydown", function (e) {
+    if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === "s") { e.preventDefault(); save(); }
+  });
+
+  /* ---------- boot ---------- */
+
+  rows = readLocal() || [];
+  renderAll();
+  flag("tersimpan di browser", false);
+  idb("readonly", function (st) { return st.get("file"); }).then(function (h) {
+    if (!h) return;
+    fileHandle = h; flag("file: " + (h.name || "tersambung"), false);
+  });
+
+})();
+</script>
+</body>
+</html>
