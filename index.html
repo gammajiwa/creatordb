@@ -110,8 +110,7 @@
   .item[aria-current="true"] { background:var(--accent-b); }
   .item[aria-current="true"] .iname { color:var(--accent); }
   .item.prio { box-shadow:inset 3px 0 0 var(--accent); }
-  .item.dim .iname { color:var(--muted); font-weight:400; }
-  .item.dim .isub { color:var(--faint); }
+  /* status cukup diwakili titik warna di kanan, teks nggak usah diredupin */
   .istack { min-width:0; }
   .iname { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .imeta { font-family:"IBM Plex Mono", monospace; font-size:10.5px; color:var(--faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -1285,18 +1284,66 @@
 
   /* ---------- boot ---------- */
 
+  // Kolom milik data tim vs kolom hasil kerja kamu.
+  var REF_FIELDS  = ["nama","link","sub","negara","fokus","genre","sumber","catatan"];
+  var WORK_FIELDS = ["email","status","followup","bayaran","harga","mata"];
+  var LS_SNAP = "yt-marketing-shared-v1";
+
+  function readSnap() { try { var s = localStorage.getItem(LS_SNAP); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function writeSnap(m) { try { localStorage.setItem(LS_SNAP, JSON.stringify(m)); } catch (e) {} }
+
+  function syncShared(list) {
+    var snap = readSnap();
+    var first = !snap;
+    snap = snap || {};
+    var byKey = {}; rows.forEach(function (r) { byKey[keyOf(r)] = r; });
+    var added = 0, updated = 0, next = {};
+
+    list.forEach(function (src) {
+      var k = keyOf(src);
+      next[k] = {};
+      REF_FIELDS.concat(WORK_FIELDS).forEach(function (f) { next[k][f] = src[f]; });
+
+      var cur = byKey[k];
+      if (!cur) { rows.push(src); added++; return; }
+
+      var old = snap[k] || {}, changed = false;
+
+      REF_FIELDS.forEach(function (f) {
+        var a = String(cur[f] == null ? "" : cur[f]);
+        var b = String(src[f] == null ? "" : src[f]);
+        var o = String(old[f] == null ? "" : old[f]);
+        // Pertama kali sinkron: kolom rujukan ikut data tim.
+        // Berikutnya: cuma diperbarui kalau kamu belum pernah ngubah nilainya.
+        if (first || a === o || !a.trim()) { if (a !== b) { cur[f] = src[f]; changed = true; } }
+      });
+
+      WORK_FIELDS.forEach(function (f) {
+        var a = String(cur[f] == null ? "" : cur[f]).trim();
+        var b = String(src[f] == null ? "" : src[f]).trim();
+        var isDefault = (f === "status" && a === "Belum Dihubungi") || (f === "bayaran" && a === "Belum Tahu");
+        if ((!a || isDefault) && b) { cur[f] = src[f]; changed = true; }
+      });
+
+      if (changed) updated++;
+    });
+
+    writeSnap(next);
+    return { added: added, updated: updated };
+  }
+
   function loadShared(silent) {
     return fetch("data.json", { cache: "no-store" })
       .then(function (res) { if (!res.ok) throw new Error("404"); return res.json(); })
       .then(function (d) {
         if (!d || !d.length) throw new Error("kosong");
-        var m = mergeFill(d.map(fromObj));
+        var m = syncShared(d.map(fromObj));
         touch(); renderAll();
         var bits = [];
         if (m.added) bits.push(m.added + " channel baru");
-        if (m.filled) bits.push(m.filled + " baris dilengkapi");
-        toast(bits.length ? "Data tim dimuat: " + bits.join(", ") + ". Yang udah kamu isi nggak diubah."
-                          : "Data tim udah sama persis \u2014 nggak ada yang berubah.");
+        if (m.updated) bits.push(m.updated + " baris diperbarui");
+        if (bits.length) toast("Data tim disinkronkan: " + bits.join(", ") + ". Isian kamu nggak diubah.");
+        else if (!silent) toast("Udah paling baru \u2014 nggak ada yang berubah.");
       })["catch"](function () {
         if (!silent) toast("data.json nggak ketemu di folder yang sama sama index.html.");
         renderAll();
@@ -1309,13 +1356,10 @@
     GENRES.forEach(function (g) { var o = el("option"); o.value = g; dl.appendChild(o); });
   })();
 
-  var local = readLocal();
-  if (local && local.length) {
-    rows = local; renderAll();
-  } else {
-    rows = []; renderAll(); loadShared(true);
-  }
+  rows = readLocal() || [];
+  renderAll();
   flag("tersimpan di browser", false);
+  loadShared(true);
   idb("readonly", function (st) { return st.get("file"); }).then(function (h) {
     if (!h) return;
     fileHandle = h; flag("file: " + (h.name || "tersambung"), false);
