@@ -128,6 +128,14 @@
   .tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
   .tag { font-family:"IBM Plex Mono", monospace; font-size:10px; padding:2px 7px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--surface2); }
   .tag.hit { border-color:var(--accent); color:var(--accent); background:var(--accent-b); }
+  .links { display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+  .linkchip { display:inline-flex; align-items:center; gap:6px; font-family:"IBM Plex Mono", monospace; font-size:11px;
+              padding:5px 10px; border-radius:999px; border:1px solid var(--line); background:var(--surface2);
+              color:var(--muted); text-decoration:none; max-width:100%; }
+  .linkchip:hover { border-color:var(--accent); color:var(--accent); }
+  .linkchip b { color:var(--ink); font-weight:500; }
+  .linkchip:hover b { color:var(--accent); }
+  .linkchip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:210px; }
   .dot { width:8px; height:8px; border-radius:50%; background:var(--line); flex:none; }
   .dot.d-accent { background:var(--accent); } .dot.d-good { background:var(--good); }
   .dot.d-warn { background:var(--warn); } .dot.d-stop { background:var(--stop); }
@@ -415,7 +423,7 @@
      GitHub Pages nyuruh browser nyimpen index.html sampai 10 menit (max-age=600),
      jadi versi baru bisa nggak keliatan walau server udah update. version.txt
      diambil tanpa cache; kalau isinya beda dari BUILD, kasih tau biar dimuat ulang. */
-  var BUILD = "20260901-2200";
+  var BUILD = "20260901-2202";
   function checkVersion() {
     fetch("version.txt", { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : null; })
@@ -864,22 +872,47 @@
      ditulis terang-terangan di deskripsi channel, dan itu dikasih API tanpa batas. */
 
   var KONTAK_POLA = [
-    ["Discord",  /(?:https?:\/\/)?(?:www\.)?discord(?:\.gg|app\.com\/invite)\/[A-Za-z0-9\-]+/i],
-    ["X",        /(?:https?:\/\/)?(?:www\.)?(?:twitter|x)\.com\/[A-Za-z0-9_]{2,15}/i],
-    ["Linktree", /(?:https?:\/\/)?(?:www\.)?linktr\.ee\/[A-Za-z0-9_.\-]+/i],
-    ["Telegram", /(?:https?:\/\/)?(?:www\.)?t\.me\/[A-Za-z0-9_]+/i],
-    ["Bluesky",  /(?:https?:\/\/)?(?:www\.)?bsky\.app\/profile\/[A-Za-z0-9_.\-]+/i],
-    ["Twitch",   /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/[A-Za-z0-9_]+/i],
-    ["Instagram",/(?:https?:\/\/)?(?:www\.)?instagram\.com\/[A-Za-z0-9_.]+/i]
+    ["Discord",   /(?:https?:\/\/)?(?:www\.)?discord(?:\.gg|app\.com\/invite)\/[A-Za-z0-9\-]+/ig],
+    ["X",         /(?:https?:\/\/)?(?:www\.)?(?:twitter|x)\.com\/[A-Za-z0-9_]{2,15}/ig],
+    ["Twitch",    /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/[A-Za-z0-9_]{3,30}/ig],
+    ["Instagram", /(?:https?:\/\/)?(?:www\.)?instagram\.com\/[A-Za-z0-9_.]{2,30}/ig],
+    ["Facebook",  /(?:https?:\/\/)?(?:www\.)?facebook\.com\/[A-Za-z0-9_.\-]{3,50}/ig],
+    ["TikTok",    /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@[A-Za-z0-9_.]{2,30}/ig],
+    ["Linktree",  /(?:https?:\/\/)?(?:www\.)?linktr\.ee\/[A-Za-z0-9_.\-]+/ig],
+    ["Telegram",  /(?:https?:\/\/)?(?:www\.)?t\.me\/[A-Za-z0-9_]+/ig],
+    ["Bluesky",   /(?:https?:\/\/)?(?:www\.)?bsky\.app\/profile\/[A-Za-z0-9_.\-]+/ig],
+    ["Steam",     /(?:https?:\/\/)?(?:store\.)?steampowered\.com\/[A-Za-z0-9_\/\-]+/ig]
   ];
 
-  function findKontak(desc) {
-    var t = String(desc || ""), out = [];
+  var KONTAK_ABAIKAN = /(youtube\.com|youtu\.be|paypal|streamlabs|ko-?fi|patreon|payme|amazon|bit\.ly)/i;
+
+  function findKontak(text) {
+    var t = String(text || ""), out = [], seen = {};
     KONTAK_POLA.forEach(function (k) {
-      var m = t.match(k[1]);
-      if (m) out.push(k[0] + ": " + m[0].replace(/^https?:\/\/(www\.)?/, ""));
+      var re = new RegExp(k[1].source, "ig"), m;
+      while ((m = re.exec(t)) !== null) {
+        var url = m[0].replace(/^https?:\/\/(www\.)?/i, "").replace(/[).,;]+$/, "");
+        var low = url.toLowerCase();
+        if (seen[low] || KONTAK_ABAIKAN.test(low)) continue;
+        seen[low] = 1;
+        out.push(k[0] + ": " + url);
+        if (out.length >= 6) return;
+      }
     });
-    return out.slice(0, 4).join("  ·  ");
+    return out.join("  \u00b7  ");
+  }
+
+  // "Discord: discord.gg/x  ·  Twitch: twitch.tv/y" -> [{label, url}]
+  function kontakList(s) {
+    return String(s || "").split(/\s*\u00b7\s*|\s*\|\s*/).map(function (bit) {
+      bit = bit.trim();
+      if (!bit) return null;
+      var m = bit.match(/^([A-Za-z]+)\s*:\s*(.+)$/);
+      var label = m ? m[1] : "Link";
+      var url = (m ? m[2] : bit).trim();
+      if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+      return { label: label, url: url, show: (m ? m[2] : bit).trim() };
+    }).filter(Boolean);
   }
 
   /* ---------- manen email dari deskripsi channel ----------
@@ -1450,7 +1483,33 @@
     body.appendChild(field("Genre yang dia mainin", gWrap));
     body.appendChild(field("Sumber data", bind(r, "sumber", el("input", "in mono", { placeholder:"belum dicatat" }), renderList)));
     body.appendChild(field("Email", bind(r, "email", el("input", "in mono", { type:"email", placeholder:"belum dicari" }), renderStats)));
-    body.appendChild(field("Kontak lain (Discord, X, dll)", bind(r, "kontak", el("input", "in mono", { placeholder:"kepanen otomatis dari deskripsi channel" }))));
+    var kWrap = el("div");
+    var kIn = el("input", "in mono", { placeholder:"tempel link apa aja dari halaman About-nya" });
+    var kChips = el("div", "links");
+    function paintKontak() {
+      kChips.textContent = "";
+      kontakList(r.kontak).forEach(function (c) {
+        var a = el("a", "linkchip", { href:c.url, target:"_blank", rel:"noopener noreferrer", title:c.url });
+        var b = el("b"); b.textContent = c.label;
+        var s = el("span"); s.textContent = c.show;
+        a.appendChild(b); a.appendChild(s); kChips.appendChild(a);
+      });
+    }
+    bind(r, "kontak", kIn, function () { paintKontak(); renderStats(); });
+    // Tempel blok teks apa pun dari halaman About -> link-nya diambil sendiri.
+    kIn.addEventListener("paste", function (ev) {
+      var t = (ev.clipboardData || window.clipboardData).getData("text") || "";
+      var found = findKontak(t);
+      if (found && found !== t.trim()) {
+        ev.preventDefault();
+        var gabung = r.kontak ? findKontak(r.kontak + " " + t) : found;
+        r.kontak = gabung; kIn.value = gabung; touch(); paintKontak(); renderStats();
+        toast(kontakList(gabung).length + " link kebaca dari tempelan.");
+      }
+    });
+    kWrap.appendChild(kIn); kWrap.appendChild(kChips);
+    paintKontak();
+    body.appendChild(field("Kontak lain \u2014 tempel dari halaman About", kWrap));
 
     var g2 = el("div", "grid2");
     var stSel = el("select", "in " + cls(STATUSES, r.status));
@@ -1583,7 +1642,7 @@
         ["CSV", "Ekspor buat Excel atau Sheets. Bukan tempat nyimpan."],
         ["Rentang sub", "Isi min dan max buat nyaring ukuran channel. Tombol 5k\u201320k langsung ke rentang paling realistis buat dev kecil \u2014 penontonnya lebih niat dan peluang dibales jauh lebih tinggi daripada channel gede."],
         ["Genre", "Genre game yang biasa dia mainin. Isi manual atau klik Tebak. Waktu Lengkapi Data jalan, genre ketebak sendiri dari deskripsi channel. Saring lewat dropdown genre di kiri \u2014 ini yang bikin satu database kepakai buat semua project kamu."],
-        ["Kontak lain", "Discord, X, Linktree, Twitch, Telegram, Instagram \u2014 dipanen otomatis dari deskripsi channel waktu Lengkapi Data. Berguna banget karena YouTube mbatasin berapa email yang boleh kamu buka per hari, sementara link ini nggak dibatasi sama sekali."],
+        ["Kontak lain", "Discord, X, Twitch, Instagram, Facebook, TikTok, Linktree, Telegram, Bluesky, Steam \u2014 semuanya jadi tombol yang bisa diklik. Yang ditulis di deskripsi channel kepanen otomatis waktu Lengkapi Data. Yang ada di seksi Link halaman About nggak dikasih API, jadi blok teksnya kamu sorot lalu tempel ke kolom ini \u2014 link-nya diambil sendiri. Ini penting karena YouTube mbatasin berapa email yang boleh dibuka per hari, sementara link ini nggak dibatasi."],
         ["Kolom Sumber", "Nyatet asal-usul tiap baris, jadi datanya selalu bisa dicek. Chip Estimasi nyaring yang angkanya masih kiraan."]
       ].forEach(function (r) {
         var row = el("div", "helprow");
