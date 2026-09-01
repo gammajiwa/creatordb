@@ -415,7 +415,7 @@
      GitHub Pages nyuruh browser nyimpen index.html sampai 10 menit (max-age=600),
      jadi versi baru bisa nggak keliatan walau server udah update. version.txt
      diambil tanpa cache; kalau isinya beda dari BUILD, kasih tau biar dimuat ulang. */
-  var BUILD = "20260901-2151";
+  var BUILD = "20260901-2156";
   function checkVersion() {
     fetch("version.txt", { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : null; })
@@ -683,7 +683,7 @@
       .then(function (r) { return r.status === 404 ? { sha: null } : r.json(); })
       .then(function (info) {
         var body = {
-          message: "[web] Perbarui data.json \u2014 " + rows.length + " channel",
+          message: "chore(data): update data.json (" + rows.length + " channels)",
           content: b64utf8(payload())
         };
         if (info && info.sha) body.sha = info.sha;
