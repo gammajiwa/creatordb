@@ -320,8 +320,8 @@
   function genreList(r) {
     return String(r.genre || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
   }
-  var FIELDS = ["nama","link","sub","negara","fokus","genre","sumber","email","status","followup","bayaran","harga","mata","catatan"];
-  var HEADERS = ["Nama Channel","Link Channel","Subscriber","Negara","Fokus Konten","Genre","Sumber","Email",
+  var FIELDS = ["nama","link","sub","negara","fokus","genre","sumber","email","kontak","status","followup","bayaran","harga","mata","catatan"];
+  var HEADERS = ["Nama Channel","Link Channel","Subscriber","Negara","Fokus Konten","Genre","Sumber","Email","Kontak Lain",
                  "Status","Tanggal Follow-up","Minta Bayaran","Harga","Mata Uang","Catatan"];
   var LS = "yt-marketing-db-v1", LS_KEY = "yt-marketing-apikey";
 
@@ -415,7 +415,7 @@
      GitHub Pages nyuruh browser nyimpen index.html sampai 10 menit (max-age=600),
      jadi versi baru bisa nggak keliatan walau server udah update. version.txt
      diambil tanpa cache; kalau isinya beda dari BUILD, kasih tau biar dimuat ulang. */
-  var BUILD = "20260901-2156";
+  var BUILD = "20260901-2200";
   function checkVersion() {
     fetch("version.txt", { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : null; })
@@ -438,7 +438,7 @@
   function hasData(r) { return String(r.sub || "").trim() !== ""; }
 
   function blank() {
-    return { nama:"", link:"", sub:"", negara:"", fokus:"", genre:"", sumber:"", email:"",
+    return { nama:"", link:"", sub:"", negara:"", fokus:"", genre:"", sumber:"", email:"", kontak:"",
              status:"Belum Dihubungi", followup:"", bayaran:"Belum Tahu",
              harga:"", mata:"", catatan:"" };
   }
@@ -450,6 +450,7 @@
     r.negara = o["Negara"] || o.negara || "";
     r.fokus = o["Fokus Konten"] || o.fokus || "";
     r.genre = o["Genre"] || o.genre || "";
+    r.kontak = o["Kontak Lain"] || o.kontak || "";
     r.sumber = o["Sumber"] || o.sumber || "";
     r.email = o["Email"] || o.email || "";
     r.status = o["Status"] || o.status || "Belum Dihubungi";
@@ -858,6 +859,29 @@
 
   function chunk(a, n) { var o = []; for (var i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; }
 
+  /* ---------- jalur kontak selain email ----------
+     Email di YouTube dibatasi per hari, tapi Discord / X / Linktree / situs pribadi
+     ditulis terang-terangan di deskripsi channel, dan itu dikasih API tanpa batas. */
+
+  var KONTAK_POLA = [
+    ["Discord",  /(?:https?:\/\/)?(?:www\.)?discord(?:\.gg|app\.com\/invite)\/[A-Za-z0-9\-]+/i],
+    ["X",        /(?:https?:\/\/)?(?:www\.)?(?:twitter|x)\.com\/[A-Za-z0-9_]{2,15}/i],
+    ["Linktree", /(?:https?:\/\/)?(?:www\.)?linktr\.ee\/[A-Za-z0-9_.\-]+/i],
+    ["Telegram", /(?:https?:\/\/)?(?:www\.)?t\.me\/[A-Za-z0-9_]+/i],
+    ["Bluesky",  /(?:https?:\/\/)?(?:www\.)?bsky\.app\/profile\/[A-Za-z0-9_.\-]+/i],
+    ["Twitch",   /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/[A-Za-z0-9_]+/i],
+    ["Instagram",/(?:https?:\/\/)?(?:www\.)?instagram\.com\/[A-Za-z0-9_.]+/i]
+  ];
+
+  function findKontak(desc) {
+    var t = String(desc || ""), out = [];
+    KONTAK_POLA.forEach(function (k) {
+      var m = t.match(k[1]);
+      if (m) out.push(k[0] + ": " + m[0].replace(/^https?:\/\/(www\.)?/, ""));
+    });
+    return out.slice(0, 4).join("  ·  ");
+  }
+
   /* ---------- manen email dari deskripsi channel ----------
      Tombol "View email address" di YouTube dikunci CAPTCHA dan nggak ada di API.
      Tapi banyak kreator nulis alamatnya terang-terangan di deskripsi channel,
@@ -918,6 +942,10 @@
     if (!String(r.email || "").trim()) {
       var mail = findEmail(sn.description);
       if (mail) { r.email = mail; r._mailFound = true; }
+    }
+    if (!String(r.kontak || "").trim()) {
+      var kon = findKontak(sn.description);
+      if (kon) r.kontak = kon;
     }
     r.sumber = "YouTube Data API v3";
     var stamp = "Data YouTube API " + new Date().toISOString().slice(0,10);
@@ -1281,7 +1309,7 @@
   /* ---------- filter & render ---------- */
 
   var FILTERS = [
-    ["all","Semua"], ["nodata","Perlu Dicek"], ["estim","Estimasi"], ["prio","Prioritas"], ["email","Ada Email"],
+    ["all","Semua"], ["nodata","Perlu Dicek"], ["estim","Estimasi"], ["prio","Prioritas"], ["email","Ada Email"], ["reachable","Bisa Dihubungi"],
     ["todo","Belum"], ["sent","Terkirim"], ["reply","Dibales"], ["paid","Bayaran"]
   ];
   function inBand(r) {
@@ -1309,12 +1337,13 @@
     if (filter === "estim" && !/Estimasi/i.test(r.sumber || "")) return false;
     if (filter === "prio"  && !isPrio(r)) return false;
     if (filter === "email" && !String(r.email || "").trim()) return false;
+    if (filter === "reachable" && !String(r.email || "").trim() && !String(r.kontak || "").trim()) return false;
     if (filter === "todo"  && r.status !== "Belum Dihubungi") return false;
     if (filter === "sent"  && r.status !== "Sudah Email") return false;
     if (filter === "reply" && r.status !== "Dibales") return false;
     if (filter === "paid"  && r.bayaran !== "Ya") return false;
     if (query) {
-      var hay = (r.nama+" "+r.email+" "+r.catatan+" "+r.fokus+" "+r.genre+" "+r.negara+" "+r.link+" "+r.sumber).toLowerCase();
+      var hay = (r.nama+" "+r.email+" "+r.kontak+" "+r.catatan+" "+r.fokus+" "+r.genre+" "+r.negara+" "+r.link+" "+r.sumber).toLowerCase();
       if (hay.indexOf(query) === -1) return false;
     }
     return true;
@@ -1421,6 +1450,7 @@
     body.appendChild(field("Genre yang dia mainin", gWrap));
     body.appendChild(field("Sumber data", bind(r, "sumber", el("input", "in mono", { placeholder:"belum dicatat" }), renderList)));
     body.appendChild(field("Email", bind(r, "email", el("input", "in mono", { type:"email", placeholder:"belum dicari" }), renderStats)));
+    body.appendChild(field("Kontak lain (Discord, X, dll)", bind(r, "kontak", el("input", "in mono", { placeholder:"kepanen otomatis dari deskripsi channel" }))));
 
     var g2 = el("div", "grid2");
     var stSel = el("select", "in " + cls(STATUSES, r.status));
@@ -1473,10 +1503,11 @@
   }
 
   function renderStats() {
-    var total = rows.length, nodata = 0, mail = 0, contacted = 0, replied = 0, paid = 0, money = {};
+    var total = rows.length, nodata = 0, mail = 0, reach = 0, contacted = 0, replied = 0, paid = 0, money = {};
     rows.forEach(function (r) {
       if (!hasData(r)) nodata++;
       if (String(r.email || "").trim()) mail++;
+      if (String(r.email || "").trim() || String(r.kontak || "").trim()) reach++;
       if (r.status !== "Belum Dihubungi" && r.status !== "SKIP" && r.status !== "SIMPAN NANTI") contacted++;
       if (r.status === "Dibales" || r.status === "Setuju Gratis" || r.status === "Sudah Main") replied++;
       if (r.bayaran === "Ya") {
@@ -1498,6 +1529,7 @@
     card("Belum ada data", nodata, total ? " / " + total : "", nodata > 0);
     card("Rentang 5k–20k", bandCount(), "");
     card("Punya email", mail, total ? " / " + total : "");
+    card("Bisa dihubungi", reach, total ? " / " + total : "");
     card("Sudah dihubungi", contacted, "");
     card("Dapat balasan", replied, "");
     var m = el("div", "stat money");
@@ -1551,6 +1583,7 @@
         ["CSV", "Ekspor buat Excel atau Sheets. Bukan tempat nyimpan."],
         ["Rentang sub", "Isi min dan max buat nyaring ukuran channel. Tombol 5k\u201320k langsung ke rentang paling realistis buat dev kecil \u2014 penontonnya lebih niat dan peluang dibales jauh lebih tinggi daripada channel gede."],
         ["Genre", "Genre game yang biasa dia mainin. Isi manual atau klik Tebak. Waktu Lengkapi Data jalan, genre ketebak sendiri dari deskripsi channel. Saring lewat dropdown genre di kiri \u2014 ini yang bikin satu database kepakai buat semua project kamu."],
+        ["Kontak lain", "Discord, X, Linktree, Twitch, Telegram, Instagram \u2014 dipanen otomatis dari deskripsi channel waktu Lengkapi Data. Berguna banget karena YouTube mbatasin berapa email yang boleh kamu buka per hari, sementara link ini nggak dibatasi sama sekali."],
         ["Kolom Sumber", "Nyatet asal-usul tiap baris, jadi datanya selalu bisa dicek. Chip Estimasi nyaring yang angkanya masih kiraan."]
       ].forEach(function (r) {
         var row = el("div", "helprow");
@@ -1627,7 +1660,8 @@
 
   // Kolom milik data tim vs kolom hasil kerja kamu.
   var REF_FIELDS  = ["nama","link","sub","negara","fokus","genre","sumber","catatan"];
-  var WORK_FIELDS = ["email","status","followup","bayaran","harga","mata"];
+  var WORK_EXTRA  = ["kontak"];
+  var WORK_FIELDS = ["email","kontak","status","followup","bayaran","harga","mata"];
   var LS_SNAP = "yt-marketing-shared-v1";
 
   function readSnap() { try { var s = localStorage.getItem(LS_SNAP); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
