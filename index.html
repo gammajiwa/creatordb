@@ -110,12 +110,16 @@
   .item[aria-current="true"] { background:var(--accent-b); }
   .item[aria-current="true"] .iname { color:var(--accent); }
   .item.prio { box-shadow:inset 3px 0 0 var(--accent); }
-  .item.dim { opacity:.45; }
+  .item.dim .iname { color:var(--muted); font-weight:400; }
+  .item.dim .isub { color:var(--faint); }
   .istack { min-width:0; }
   .iname { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .imeta { font-family:"IBM Plex Mono", monospace; font-size:10.5px; color:var(--faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .isub { font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
   .isub.unknown { color:var(--faint); font-style:italic; }
+  .tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+  .tag { font-family:"IBM Plex Mono", monospace; font-size:10px; padding:2px 7px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--surface2); }
+  .tag.hit { border-color:var(--accent); color:var(--accent); background:var(--accent-b); }
   .dot { width:8px; height:8px; border-radius:50%; background:var(--line); flex:none; }
   .dot.d-accent { background:var(--accent); } .dot.d-good { background:var(--good); }
   .dot.d-warn { background:var(--warn); } .dot.d-stop { background:var(--stop); }
@@ -204,7 +208,7 @@
   <header class="masthead">
     <div>
       <h1>YouTuber Marketing List</h1>
-      <p class="kicker">Grimoire Master &middot; Fire Rabbit Studio</p>
+      <p class="kicker">Database outreach kreator</p>
     </div>
     <div class="toolbar">
       <span class="saver" id="saver">siap</span>
@@ -236,6 +240,9 @@
           </select>
           <span class="count" id="count"></span>
         </div>
+        <select class="sortsel" id="genreSel" aria-label="Saring genre">
+          <option value="">Semua genre</option>
+        </select>
         <div class="rangerow">
           <input class="rangein" id="minSub" type="number" min="0" step="1000" placeholder="min sub" aria-label="Subscriber minimum">
           <span>&ndash;</span>
@@ -254,6 +261,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <input type="file" id="fileIn" accept=".json,.csv" hidden>
+<datalist id="genrelist"></datalist>
 
 <script>
 (function () {
@@ -267,8 +275,39 @@
   ];
   var PAYS = [["Belum Tahu","s-neutral"], ["Tidak","s-good"], ["Ya","s-warn"]];
   var CURRENCIES = ["","USD","EUR","GBP","IDR","CNY"];
-  var FIELDS = ["nama","link","sub","negara","fokus","sumber","email","status","followup","bayaran","harga","mata","catatan"];
-  var HEADERS = ["Nama Channel","Link Channel","Subscriber","Negara","Fokus Konten","Sumber","Email",
+  var GENRES = ["Roguelite","Survivors-like","Deckbuilder","Strategy","Simulation","Tycoon/Manajemen",
+                "RPG","Horror","Puzzle","Platformer","Metroidvania","Shooter","Sandbox/Crafting",
+                "Naratif","Kartu/Board","Idle/Incremental","Retro","Variety"];
+  var GENRE_HINTS = [
+    ["Survivors-like", /survivor.?like|bullet ?heaven|auto.?shooter|vampire survivors/i],
+    ["Roguelite",      /roguel(ik|it)e|rogue.?lik|rogue.?lit/i],
+    ["Deckbuilder",    /deck.?build|slay the spire|card battler/i],
+    ["Kartu/Board",    /board ?game|card game|tabletop/i],
+    ["Strategy",       /strategy|strategi|\b4x\b|\brts\b|tactic|wargame/i],
+    ["Tycoon/Manajemen", /tycoon|management|manajemen|colony|city.?build|factory/i],
+    ["Simulation",     /simulation|simulator|\bsim\b/i],
+    ["Horror",         /horror|scary|creepy|survival horror/i],
+    ["Puzzle",         /puzzle|teka.?teki/i],
+    ["Metroidvania",   /metroidvania/i],
+    ["Platformer",     /platformer|precision platform/i],
+    ["RPG",            /\brpg\b|role.?playing|\bjrpg\b|\bcrpg\b/i],
+    ["Shooter",        /\bfps\b|shooter|boomer shooter/i],
+    ["Sandbox/Crafting", /sandbox|crafting|base.?build|survival craft/i],
+    ["Naratif",        /narrative|story.?rich|visual novel|adventure game/i],
+    ["Idle/Incremental", /idle|incremental|clicker/i],
+    ["Retro",          /retro|\bdos\b|classic games|old.?school/i],
+    ["Variety",        /variety|let.?s play|lets play|indie games/i]
+  ];
+  function guessGenre(text) {
+    var t = String(text || ""), hit = [];
+    GENRE_HINTS.forEach(function (g) { if (g[1].test(t) && hit.indexOf(g[0]) === -1) hit.push(g[0]); });
+    return hit.slice(0, 4).join(", ");
+  }
+  function genreList(r) {
+    return String(r.genre || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+  var FIELDS = ["nama","link","sub","negara","fokus","genre","sumber","email","status","followup","bayaran","harga","mata","catatan"];
+  var HEADERS = ["Nama Channel","Link Channel","Subscriber","Negara","Fokus Konten","Genre","Sumber","Email",
                  "Status","Tanggal Follow-up","Minta Bayaran","Harga","Mata Uang","Catatan"];
   var LS = "yt-marketing-db-v1", LS_KEY = "yt-marketing-apikey";
 
@@ -300,7 +339,7 @@
   function hasData(r) { return String(r.sub || "").trim() !== ""; }
 
   function blank() {
-    return { nama:"", link:"", sub:"", negara:"", fokus:"", sumber:"", email:"",
+    return { nama:"", link:"", sub:"", negara:"", fokus:"", genre:"", sumber:"", email:"",
              status:"Belum Dihubungi", followup:"", bayaran:"Belum Tahu",
              harga:"", mata:"", catatan:"" };
   }
@@ -311,6 +350,7 @@
     r.sub = o["Subscriber"] || o.sub || "";
     r.negara = o["Negara"] || o.negara || "";
     r.fokus = o["Fokus Konten"] || o.fokus || "";
+    r.genre = o["Genre"] || o.genre || "";
     r.sumber = o["Sumber"] || o.sumber || "";
     r.email = o["Email"] || o.email || "";
     r.status = o["Status"] || o.status || "Belum Dihubungi";
@@ -528,6 +568,10 @@
     var n = num(r.sub);
     var tag = n > 200000 ? "DI ATAS 200k" : "";
     var base = String(r.catatan || "").replace(/Arsip itch\.io - sub & fokus BELUM dicek/i, "").replace(/Ditambah lewat Scan - belum diverifikasi/i, "").trim();
+    if (!String(r.genre || "").trim()) {
+      var g = guessGenre((sn.title || "") + " " + (sn.description || ""));
+      if (g) r.genre = g;
+    }
     r.sumber = "YouTube Data API v3";
     var stamp = "Data YouTube API " + new Date().toISOString().slice(0,10);
     r.catatan = [base, hidden ? "Subscriber disembunyikan channel" : "", tag, stamp].filter(Boolean).join(" · ");
@@ -906,8 +950,10 @@
     });
     return c;
   }
+  var genreFilter = "";
   function match(r) {
     if (!inBand(r)) return false;
+    if (genreFilter && genreList(r).indexOf(genreFilter) === -1) return false;
     if (filter === "nodata" && hasData(r)) return false;
     if (filter === "estim" && !/Estimasi/i.test(r.sumber || "")) return false;
     if (filter === "prio"  && !isPrio(r)) return false;
@@ -917,7 +963,7 @@
     if (filter === "reply" && r.status !== "Dibales") return false;
     if (filter === "paid"  && r.bayaran !== "Ya") return false;
     if (query) {
-      var hay = (r.nama+" "+r.email+" "+r.catatan+" "+r.fokus+" "+r.negara+" "+r.link+" "+r.sumber).toLowerCase();
+      var hay = (r.nama+" "+r.email+" "+r.catatan+" "+r.fokus+" "+r.genre+" "+r.negara+" "+r.link+" "+r.sumber).toLowerCase();
       if (hay.indexOf(query) === -1) return false;
     }
     return true;
@@ -956,6 +1002,15 @@
       var n = el("div", "iname"); n.textContent = r.nama || "(tanpa nama)";
       var mt = el("div", "imeta"); mt.textContent = keyOf(r) + (r.negara ? " · " + r.negara : "");
       st.appendChild(n); st.appendChild(mt);
+      var gl = genreList(r);
+      if (gl.length) {
+        var tags = el("div", "tags");
+        gl.slice(0, 3).forEach(function (g) {
+          var t2 = el("span", "tag" + (genreFilter === g ? " hit" : ""));
+          t2.textContent = g; tags.appendChild(t2);
+        });
+        st.appendChild(tags);
+      }
       var sub = el("div", hasData(r) ? "isub" : "isub unknown");
       sub.textContent = hasData(r) ? (num(r.sub) ? fmt(num(r.sub)) : r.sub) : "belum dicek";
       var dot = el("span", "dot " + dotOf(r.status), { title:r.status });
@@ -999,6 +1054,20 @@
     g1.appendChild(field("Negara", bind(r, "negara", el("input", "in mono", { placeholder:"—" }), renderList)));
     body.appendChild(g1);
     body.appendChild(field("Fokus konten", bind(r, "fokus", el("input", "in", { placeholder:"—" }))));
+
+    var gWrap = el("div", "money");
+    var gIn = el("input", "in", { list:"genrelist", placeholder:"Roguelite, Deckbuilder, …" });
+    bind(r, "genre", gIn, function () { renderList(); fillGenres(); });
+    var gBtn = el("button"); gBtn.textContent = "Tebak";
+    gBtn.title = "Tebak dari nama, fokus, dan catatan channel";
+    gBtn.addEventListener("click", function () {
+      var g = guessGenre(r.nama + " " + r.fokus + " " + r.catatan);
+      if (!g) { toast("Nggak cukup petunjuk buat nebak genre-nya."); return; }
+      r.genre = g; gIn.value = g; touch(); renderList(); fillGenres();
+      toast("Genre ditebak: " + g + ". Koreksi kalau meleset.");
+    });
+    gWrap.appendChild(gIn); gWrap.appendChild(gBtn);
+    body.appendChild(field("Genre yang dia mainin", gWrap));
     body.appendChild(field("Sumber data", bind(r, "sumber", el("input", "in mono", { placeholder:"belum dicatat" }), renderList)));
     body.appendChild(field("Email", bind(r, "email", el("input", "in mono", { type:"email", placeholder:"belum dicari" }), renderStats)));
 
@@ -1095,7 +1164,23 @@
       $chips.appendChild(b);
     });
   }
-  function renderAll() { renderChips(); renderList(); renderDetail(); renderStats(); }
+  function fillGenres() {
+    var sel = document.getElementById("genreSel");
+    var found = {}, n = 0;
+    rows.forEach(function (r) { genreList(r).forEach(function (g) { if (!found[g]) { found[g] = 0; n++; } found[g]++; }); });
+    var keys = Object.keys(found).sort();
+    var cur = genreFilter;
+    sel.textContent = "";
+    var o0 = el("option"); o0.value = ""; o0.textContent = n ? "Semua genre (" + n + ")" : "Genre belum diisi";
+    sel.appendChild(o0);
+    keys.forEach(function (g) {
+      var o = el("option"); o.value = g; o.textContent = g + "  (" + found[g] + ")";
+      if (g === cur) o.selected = true;
+      sel.appendChild(o);
+    });
+    if (cur && keys.indexOf(cur) === -1) { genreFilter = ""; }
+  }
+  function renderAll() { renderChips(); fillGenres(); renderList(); renderDetail(); renderStats(); }
 
   /* ---------- wiring ---------- */
 
@@ -1111,6 +1196,7 @@
         ["Simpan", "Nulis seluruh database ke satu file youtuber-db.json. Pilih lokasinya sekali, klik berikutnya langsung nimpa file yang sama. Bisa juga pakai Ctrl+S."],
         ["CSV", "Ekspor buat Excel atau Sheets. Bukan tempat nyimpan."],
         ["Rentang sub", "Isi min dan max buat nyaring ukuran channel. Tombol 5k\u201320k langsung ke rentang paling realistis buat dev kecil \u2014 penontonnya lebih niat dan peluang dibales jauh lebih tinggi daripada channel gede."],
+        ["Genre", "Genre game yang biasa dia mainin. Isi manual atau klik Tebak. Waktu Lengkapi Data jalan, genre ketebak sendiri dari deskripsi channel. Saring lewat dropdown genre di kiri \u2014 ini yang bikin satu database kepakai buat semua project kamu."],
         ["Kolom Sumber", "Nyatet asal-usul tiap baris, jadi datanya selalu bisa dicek. Chip Estimasi nyaring yang angkanya masih kiraan."]
       ].forEach(function (r) {
         var row = el("div", "helprow");
@@ -1174,6 +1260,7 @@
   });
   document.getElementById("q").addEventListener("input", function (e) { query = e.target.value.trim().toLowerCase(); renderList(); });
   document.getElementById("sort").addEventListener("change", function (e) { sortMode = e.target.value; renderList(); });
+  document.getElementById("genreSel").addEventListener("change", function (e) { genreFilter = e.target.value; renderList(); });
   window.addEventListener("keydown", function (e) {
     if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === "s") { e.preventDefault(); save(); }
   });
@@ -1195,6 +1282,11 @@
       });
   }
   document.getElementById("sharedBtn").addEventListener("click", function () { loadShared(false); });
+
+  (function () {
+    var dl = document.getElementById("genrelist");
+    GENRES.forEach(function (g) { var o = el("option"); o.value = g; dl.appendChild(o); });
+  })();
 
   var local = readLocal();
   if (local && local.length) {
