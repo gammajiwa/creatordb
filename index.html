@@ -755,6 +755,44 @@
 
   function chunk(a, n) { var o = []; for (var i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; }
 
+  /* ---------- manen email dari deskripsi channel ----------
+     Tombol "View email address" di YouTube dikunci CAPTCHA dan nggak ada di API.
+     Tapi banyak kreator nulis alamatnya terang-terangan di deskripsi channel,
+     dan deskripsi ITU dikasih API. Di situ kita manen. ---------- */
+
+  var EMAIL_RE = /[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,12}/g;
+  var EMAIL_BAD = /\.(png|jpe?g|gif|webp|svg|mp4|webm)$/i;
+  var EMAIL_NEAR = /(business|inquir|enquir|contact|kontak|bisnis|sponsor|press|promo|kerjasama|booking|partnership)/i;
+
+  // "nama (at) gmail (dot) com" -> "nama@gmail.com"
+  function deobfuscate(t) {
+    return String(t || "")
+      .replace(/\s*[\(\[\{]\s*at\s*[\)\]\}]\s*/gi, "@")
+      .replace(/\s+at\s+(?=[A-Za-z0-9.\-]+\s*[\(\[\{]?\s*dot)/gi, "@")
+      .replace(/\s*[\(\[\{]\s*dot\s*[\)\]\}]\s*/gi, ".")
+      .replace(/\s+dot\s+(?=[A-Za-z]{2,12}\b)/gi, ".");
+  }
+
+  function findEmail(desc) {
+    var text = deobfuscate(desc);
+    var hits = text.match(EMAIL_RE);
+    if (!hits) return "";
+    var seen = {}, clean = [];
+    hits.forEach(function (e) {
+      e = e.replace(/[.,;:]+$/, "");
+      var low = e.toLowerCase();
+      if (EMAIL_BAD.test(low) || seen[low]) return;
+      seen[low] = 1; clean.push(e);
+    });
+    if (!clean.length) return "";
+    // Utamakan yang ditulis dekat kata "business", "contact", dan sejenisnya.
+    for (var i = 0; i < clean.length; i++) {
+      var at = text.indexOf(clean[i]);
+      if (at > -1 && EMAIL_NEAR.test(text.slice(Math.max(0, at - 90), at))) return clean[i];
+    }
+    return clean[0];
+  }
+
   function applyChannel(r, item) {
     var sn = item.snippet || {}, st = item.statistics || {};
     if (sn.title) r.nama = sn.title;
@@ -773,6 +811,10 @@
     if (!String(r.genre || "").trim()) {
       var g = guessGenre((sn.title || "") + " " + (sn.description || ""));
       if (g) r.genre = g;
+    }
+    if (!String(r.email || "").trim()) {
+      var mail = findEmail(sn.description);
+      if (mail) { r.email = mail; r._mailFound = true; }
     }
     r.sumber = "YouTube Data API v3";
     var stamp = "Data YouTube API " + new Date().toISOString().slice(0,10);
@@ -808,7 +850,7 @@
 
       goBtn.addEventListener("click", function () {
         goBtn.disabled = true;
-        var done = 0, ok = 0, fail = 0;
+        var done = 0, ok = 0, fail = 0, mails = 0;
         var byId = targets.filter(function (r) { return keyOf(r).indexOf("id:") === 0; });
         var byHandle = targets.filter(function (r) { return keyOf(r).charAt(0) === "@"; });
 
@@ -842,7 +884,7 @@
                 (res.body.items || []).forEach(function (it) { map[it.id] = it; });
                 g.forEach(function (r) {
                   var it = map[keyOf(r).slice(3)];
-                  if (it) { applyChannel(r, it); ok++; } else { fail++; }
+                  if (it) { applyChannel(r, it); ok++; if (r._mailFound) { mails++; delete r._mailFound; } } else { fail++; }
                   step();
                 });
                 renderAll();
@@ -863,7 +905,11 @@
                 if (!res.ok) { if (fatal(res.body)) { cancelled = true; return; } fail++; say(handle + " — gagal", "i"); }
                 else {
                   var it = (res.body.items || [])[0];
-                  if (it) { applyChannel(r, it); ok++; say(handle + " → " + fmt(num(r.sub)) + " sub" + (r.negara ? " · " + r.negara : ""), "b"); }
+                  if (it) {
+                    applyChannel(r, it); ok++;
+                    if (r._mailFound) { mails++; delete r._mailFound; }
+                    say(handle + " → " + fmt(num(r.sub)) + " sub" + (r.negara ? " · " + r.negara : "") + (r.email ? " · ✉ " + r.email : ""), "b");
+                  }
                   else { fail++; say(handle + " — nggak ketemu", "i"); }
                 }
                 step();
@@ -881,10 +927,10 @@
         say("Mulai — " + targets.length + " channel.");
         doIds().then(doHandles).then(function () {
           touch(); renderAll();
-          say("Selesai. " + ok + " berhasil, " + fail + " gagal.", "b");
+          say("Selesai. " + ok + " berhasil, " + fail + " gagal, " + mails + " email ketemu di deskripsi.", "b");
           goBtn.disabled = false; goBtn.textContent = "Ulangi";
           stopBtn.textContent = "Tutup";
-          toast(ok + " channel keisi datanya. Jangan lupa klik Simpan.");
+          toast(ok + " channel keisi. " + mails + " email ketemu dari deskripsi channel. Jangan lupa Simpan.");
         })["catch"](function () {
           say("Berhenti karena error jaringan. Kalau kamu buka file ini lewat dobel-klik (file://), browser mungkin blokir panggilan API — taruh di server atau jalanin lewat localhost.", "i");
           goBtn.disabled = false;
@@ -1392,7 +1438,7 @@
       var dl = el("dl", "help");
       [
         ["Cari Channel", "Masukin judul game sejenis. Tool nyari video setahun terakhir, ambil channel yang bikin, lalu tarik subscriber dan negaranya dari YouTube Data API v3."],
-        ["Lengkapi Data", "Ngisi subscriber, negara, dan nama resmi buat baris yang datanya masih kosong."],
+        ["Lengkapi Data", "Ngisi subscriber, negara, nama resmi, dan genre buat baris yang masih kosong. Sekalian manen email dari deskripsi channel \u2014 banyak kreator nulis alamat bisnisnya di situ, termasuk yang disamarin jadi \u2018nama (at) gmail (dot) com\u2019."],
         ["Scan & Tambah", "Tempel URL, @handle, atau nama channel per baris. Yang udah ada dipisahin dari yang baru, jadi nggak bakal kembar."],
         ["Muat Data Tim", "Narik ulang daftar bersama dari data.json. Otomatis jalan pas pertama buka."],
         ["Simpan", "Nulis seluruh database ke file yang udah kamu pilih. Klik pertama bakal nanya lokasi; setelah itu langsung nimpa file yang sama. Bisa juga Ctrl+S."],
