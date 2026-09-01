@@ -423,7 +423,7 @@
      GitHub Pages nyuruh browser nyimpen index.html sampai 10 menit (max-age=600),
      jadi versi baru bisa nggak keliatan walau server udah update. version.txt
      diambil tanpa cache; kalau isinya beda dari BUILD, kasih tau biar dimuat ulang. */
-  var BUILD = "20260901-2202";
+  var BUILD = "20260901-2207";
   function checkVersion() {
     fetch("version.txt", { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : null; })
@@ -678,6 +678,61 @@
     });
   }
 
+  /* ---------- kenapa commit ditolak ----------
+     403/404 dari endpoint contents nggak ngasih tau apa yang kurang.
+     Kita tanya balik ke /repos dan /user biar bisa nunjuk penyebabnya. */
+  function ghDiagnose(repo, head) {
+    var owner = repo.split("/")[0];
+    fetch("https://api.github.com/repos/" + repo, { headers: head, cache: "no-store" })
+      .then(function (r) { return r.json().then(function (b) { return { s: r.status, b: b }; }); })
+      .then(function (d) {
+        if (d.s === 404) {
+          sheetPesan("Token nggak bisa lihat repo ini",
+            ["Token-nya sah, tapi repo " + repo + " nggak masuk daftar yang boleh diakses.",
+             "Buka halaman token kamu, cari bagian Repository access, pilih \u201cOnly select repositories\u201d, lalu centang repo creatordb. Kalau kamu pilih \u201cPublic repositories\u201d, itu cuma baca \u2014 nggak bisa nulis.",
+             "Pastikan juga Resource owner-nya akun " + owner + ", bukan organisasi lain."]);
+          return;
+        }
+        if (d.s === 200) {
+          var perm = d.b && d.b.permissions;
+          if (perm && !perm.push) {
+            sheetPesan("Token cuma bisa baca, belum bisa nulis",
+              ["Token-nya udah kebaca dan repo-nya keliatan, tapi izin nulisnya belum ada.",
+               "Di halaman token: Repository permissions \u2192 Contents \u2192 ganti dari Read-only jadi Read and write.",
+               "Setelah diubah, klik Update token. Nggak usah bikin token baru \u2014 token yang sama langsung kepakai."]);
+          } else {
+            sheetPesan("Ditolak GitHub",
+              ["Repo keliatan dan izin nulisnya kelihatan ada, tapi commit tetap ditolak.",
+               "Kemungkinan token-nya udah kedaluwarsa, atau repo ini dilindungi branch protection di main.",
+               "Coba bikin token baru dengan masa berlaku lebih panjang."]);
+          }
+          return;
+        }
+        if (d.s === 401) {
+          sheetPesan("Token ditolak", ["Token-nya nggak dikenali atau udah kedaluwarsa. Klik Simpan ke Repo lagi buat masukin token yang baru."]);
+          return;
+        }
+        sheetPesan("Ditolak GitHub", ["Kode " + d.s + ". " + ((d.b && d.b.message) || "")]);
+      })["catch"](function () {
+        toast("Nggak bisa nyambung ke GitHub buat mastiin penyebabnya.");
+      });
+  }
+
+  function sheetPesan(judul, baris) {
+    sheet(function (box, close) {
+      var h2 = el("h2"); h2.textContent = judul;
+      box.appendChild(h2);
+      baris.forEach(function (t) { var p2 = el("p"); p2.textContent = t; box.appendChild(p2); });
+      var link = el("p");
+      link.innerHTML = 'Halaman token kamu: <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener noreferrer">github.com/settings/tokens</a>';
+      box.appendChild(link);
+      var foot = el("div", "sheetfoot");
+      var ok = el("button", "primary"); ok.textContent = "Ngerti";
+      ok.addEventListener("click", close);
+      foot.appendChild(ok); box.appendChild(foot);
+    });
+  }
+
   function ghCommit(repo, token) {
     var url = "https://api.github.com/repos/" + repo + "/contents/data.json";
     var head = {
@@ -710,11 +765,9 @@
         }
         paintStatus();
         var msg = res.body && res.body.message ? res.body.message : "";
-        if (res.status === 401) toast("Token ditolak. Cek lagi tokennya \u2014 klik Simpan ke Repo buat ganti.");
-        else if (res.status === 403) toast("Token nggak punya izin Contents: Read and write di repo itu.");
-        else if (res.status === 404) toast("Repo nggak ketemu, atau token nggak dikasih akses ke repo itu.");
-        else if (res.status === 409) toast("Ada yang commit duluan. Refresh halamannya, terus coba lagi.");
-        else toast("Gagal commit: " + msg);
+        if (res.status === 403 || res.status === 404 || res.status === 401) { ghDiagnose(repo, head); return; }
+        if (res.status === 409) { toast("Ada yang commit duluan. Refresh halamannya, terus coba lagi."); return; }
+        toast("Gagal commit: " + msg);
       })["catch"](function () {
         paintStatus();
         toast("Nggak nyampe ke GitHub. Cek koneksi.");
