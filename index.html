@@ -17,6 +17,7 @@
     --warn:#A65F16; --warn-b:#FAECDA;
     --stop:#A33C46; --stop-b:#F8E4E6;
     --shadow:0 1px 2px rgba(25,28,36,.05), 0 8px 22px -14px rgba(25,28,36,.22);
+    --gold:#B8860B; --gold-ink:#7A5A08; --gold-bg:rgba(200,144,26,.10); --gold-bg2:rgba(200,144,26,.17);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -28,6 +29,7 @@
       --warn:#DDA062; --warn-b:#37291A;
       --stop:#E08A93; --stop-b:#372027;
       --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 22px -14px rgba(0,0,0,.7);
+      --gold:#F0C752; --gold-ink:#F5D888; --gold-bg:rgba(240,199,82,.11); --gold-bg2:rgba(240,199,82,.18);
     }
   }
   :root[data-theme="dark"] {
@@ -39,6 +41,7 @@
     --warn:#DDA062; --warn-b:#37291A;
     --stop:#E08A93; --stop-b:#372027;
     --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 22px -14px rgba(0,0,0,.7);
+      --gold:#F0C752; --gold-ink:#F5D888; --gold-bg:rgba(240,199,82,.11); --gold-bg2:rgba(240,199,82,.18);
   }
 
   * { box-sizing:border-box; }
@@ -110,7 +113,7 @@
 
   .list { max-height:min(62vh, 600px); overflow-y:auto; }
   .item {
-    display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:9px;
+    display:grid; grid-template-columns:1fr auto auto auto; align-items:center; gap:8px;
     width:100%; text-align:left; padding:9px 12px;
     background:transparent; border:0; border-bottom:1px solid var(--line2); border-radius:0;
     cursor:pointer; font-family:inherit; font-size:13px; color:var(--ink);
@@ -136,6 +139,20 @@
   .linkchip b { color:var(--ink); font-weight:500; }
   .linkchip:hover b { color:var(--accent); }
   .linkchip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:210px; }
+  .star { flex:none; width:24px; height:24px; padding:0; display:grid; place-items:center; border:0; background:transparent;
+          color:var(--line); font-size:14px; line-height:1; border-radius:6px; cursor:pointer; }
+  .star:hover { color:var(--gold); background:var(--gold-bg); border:0; }
+  .star.on { color:var(--gold); }
+  .star.big { width:32px; height:32px; font-size:19px; }
+
+  /* baris berbintang harus kelihatan dari jauh, bukan cuma ikon kecil */
+  .item.star-on { background:var(--gold-bg); box-shadow:inset 3px 0 0 var(--gold); }
+  .item.star-on:hover { background:var(--gold-bg2); }
+  .item.star-on .iname { color:var(--gold-ink); font-weight:600; }
+  .item.star-on[aria-current="true"] { background:var(--gold-bg2); }
+  .stat.gold { border-color:var(--gold); background:var(--gold-bg); }
+  .stat.gold .lab, .stat.gold .val { color:var(--gold-ink); }
+
   .dot { width:8px; height:8px; border-radius:50%; background:var(--line); flex:none; }
   .dot.d-accent { background:var(--accent); } .dot.d-good { background:var(--good); }
   .dot.d-warn { background:var(--warn); } .dot.d-stop { background:var(--stop); }
@@ -259,6 +276,7 @@
             <option value="subdesc">Sub terbanyak</option>
             <option value="subasc">Sub tersedikit</option>
             <option value="name">Nama A&ndash;Z</option>
+            <option value="star">Berbintang dulu</option>
           </select>
           <span class="count" id="count"></span>
         </div>
@@ -328,8 +346,8 @@
   function genreList(r) {
     return String(r.genre || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
   }
-  var FIELDS = ["nama","link","sub","negara","fokus","genre","sumber","email","kontak","status","followup","bayaran","harga","mata","catatan"];
-  var HEADERS = ["Nama Channel","Link Channel","Subscriber","Negara","Fokus Konten","Genre","Sumber","Email","Kontak Lain",
+  var FIELDS = ["bintang","nama","link","sub","negara","fokus","genre","sumber","email","kontak","status","followup","bayaran","harga","mata","catatan"];
+  var HEADERS = ["Potensial","Nama Channel","Link Channel","Subscriber","Negara","Fokus Konten","Genre","Sumber","Email","Kontak Lain",
                  "Status","Tanggal Follow-up","Minta Bayaran","Harga","Mata Uang","Catatan"];
   var LS = "yt-marketing-db-v1", LS_KEY = "yt-marketing-apikey";
 
@@ -423,7 +441,7 @@
      GitHub Pages nyuruh browser nyimpen index.html sampai 10 menit (max-age=600),
      jadi versi baru bisa nggak keliatan walau server udah update. version.txt
      diambil tanpa cache; kalau isinya beda dari BUILD, kasih tau biar dimuat ulang. */
-  var BUILD = "20260901-2207";
+  var BUILD = "20260901-2218";
   function checkVersion() {
     fetch("version.txt", { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : null; })
@@ -443,10 +461,23 @@
   function cls(list, v) { for (var i=0;i<list.length;i++) if (list[i][0]===v) return list[i][1]; return "s-neutral"; }
   function dotOf(v) { for (var i=0;i<STATUSES.length;i++) if (STATUSES[i][0]===v) return STATUSES[i][2]; return "d-"; }
   function isPrio(r) { return /PRIORITAS 1/i.test(r.catatan || ""); }
+  function berbintang(r) { return String(r.bintang || "") === "1"; }
+  function toggleBintang(r) {
+    r.bintang = berbintang(r) ? "" : "1";
+    touch(); renderList(); renderDetail(); renderStats();
+  }
+  function bikinBintang(r, besar) {
+    var b = el("button", "star" + (besar ? " big" : "") + (berbintang(r) ? " on" : ""), {
+      title: berbintang(r) ? "Hapus tanda potensial" : "Tandai sebagai potensial",
+      "aria-pressed": String(berbintang(r))
+    });
+    b.textContent = berbintang(r) ? "\u2605" : "\u2606";
+    return b;
+  }
   function hasData(r) { return String(r.sub || "").trim() !== ""; }
 
   function blank() {
-    return { nama:"", link:"", sub:"", negara:"", fokus:"", genre:"", sumber:"", email:"", kontak:"",
+    return { bintang:"", nama:"", link:"", sub:"", negara:"", fokus:"", genre:"", sumber:"", email:"", kontak:"",
              status:"Belum Dihubungi", followup:"", bayaran:"Belum Tahu",
              harga:"", mata:"", catatan:"" };
   }
@@ -459,6 +490,7 @@
     r.fokus = o["Fokus Konten"] || o.fokus || "";
     r.genre = o["Genre"] || o.genre || "";
     r.kontak = o["Kontak Lain"] || o.kontak || "";
+    r.bintang = o["Potensial"] || o.bintang || "";
     r.sumber = o["Sumber"] || o.sumber || "";
     r.email = o["Email"] || o.email || "";
     r.status = o["Status"] || o.status || "Belum Dihubungi";
@@ -1395,8 +1427,10 @@
   /* ---------- filter & render ---------- */
 
   var FILTERS = [
-    ["all","Semua"], ["nodata","Perlu Dicek"], ["estim","Estimasi"], ["prio","Prioritas"], ["email","Ada Email"], ["reachable","Bisa Dihubungi"],
-    ["todo","Belum"], ["sent","Terkirim"], ["reply","Dibales"], ["paid","Bayaran"]
+    ["all","Semua"], ["star","\u2605 Potensial"],
+    ["email","Ada Email"], ["reachable","Bisa Dihubungi"], ["nodata","Perlu Dicek"],
+    ["todo","Belum Dikirim"], ["sent","Udah Dikirim"], ["waiting","Nunggu Balasan"],
+    ["reply","Udah Dibales"], ["paid","Minta Bayaran"], ["estim","Estimasi"]
   ];
   function inBand(r) {
     if (minSub === null && maxSub === null) return true;
@@ -1416,29 +1450,49 @@
     return c;
   }
   var genreFilter = "";
-  function match(r) {
+
+  function passFilter(r, f) {
+    switch (f) {
+      case "star":      return berbintang(r);
+      case "nodata":    return !hasData(r);
+      case "estim":     return /Estimasi/i.test(r.sumber || "");
+      case "prio":      return isPrio(r);
+      case "email":     return !!String(r.email || "").trim();
+      case "reachable": return !!(String(r.email || "").trim() || String(r.kontak || "").trim());
+      case "todo":      return r.status === "Belum Dihubungi";
+      case "sent":      return r.status === "Sudah Email";
+      case "waiting":   return r.status === "Sudah Email" || r.status === "Tidak Dibales";
+      case "reply":     return r.status === "Dibales" || r.status === "Setuju Gratis" || r.status === "Sudah Main";
+      case "paid":      return r.bayaran === "Ya";
+      default:          return true;
+    }
+  }
+
+  // Selain chip: pencarian, genre, dan rentang subscriber.
+  function passRest(r) {
     if (!inBand(r)) return false;
     if (genreFilter && genreList(r).indexOf(genreFilter) === -1) return false;
-    if (filter === "nodata" && hasData(r)) return false;
-    if (filter === "estim" && !/Estimasi/i.test(r.sumber || "")) return false;
-    if (filter === "prio"  && !isPrio(r)) return false;
-    if (filter === "email" && !String(r.email || "").trim()) return false;
-    if (filter === "reachable" && !String(r.email || "").trim() && !String(r.kontak || "").trim()) return false;
-    if (filter === "todo"  && r.status !== "Belum Dihubungi") return false;
-    if (filter === "sent"  && r.status !== "Sudah Email") return false;
-    if (filter === "reply" && r.status !== "Dibales") return false;
-    if (filter === "paid"  && r.bayaran !== "Ya") return false;
     if (query) {
       var hay = (r.nama+" "+r.email+" "+r.kontak+" "+r.catatan+" "+r.fokus+" "+r.genre+" "+r.negara+" "+r.link+" "+r.sumber).toLowerCase();
       if (hay.indexOf(query) === -1) return false;
     }
     return true;
   }
+
+  function match(r) { return passRest(r) && passFilter(r, filter); }
+
+  function hitungChip(f) {
+    var n = 0;
+    rows.forEach(function (r) { if (passRest(r) && passFilter(r, f)) n++; });
+    return n;
+  }
+
   function visible() {
     var l = rows.filter(match);
     if (sortMode === "subdesc") l.sort(function (a,b) { return num(b.sub) - num(a.sub); });
     else if (sortMode === "subasc") l.sort(function (a,b) { return num(a.sub) - num(b.sub); });
     else if (sortMode === "name") l.sort(function (a,b) { return String(a.nama).localeCompare(String(b.nama)); });
+    else if (sortMode === "star") l.sort(function (a,b) { return (berbintang(b) ? 1 : 0) - (berbintang(a) ? 1 : 0) || num(b.sub) - num(a.sub); });
     return l;
   }
 
@@ -1461,7 +1515,8 @@
     }
     l.forEach(function (r) {
       var c = ["item"];
-      if (isPrio(r)) c.push("prio");
+      if (berbintang(r)) c.push("star-on");
+      else if (isPrio(r)) c.push("prio");
       if (r.status === "SKIP" || r.status === "SIMPAN NANTI") c.push("dim");
       var b = el("button", c.join(" "), { role:"option", "aria-current": String(r === selected) });
       var st = el("div", "istack");
@@ -1480,7 +1535,9 @@
       var sub = el("div", hasData(r) ? "isub" : "isub unknown");
       sub.textContent = hasData(r) ? (num(r.sub) ? fmt(num(r.sub)) : r.sub) : "belum dicek";
       var dot = el("span", "dot " + dotOf(r.status), { title:r.status });
-      b.appendChild(st); b.appendChild(sub); b.appendChild(dot);
+      var star = bikinBintang(r, false);
+      star.addEventListener("click", function (ev) { ev.stopPropagation(); toggleBintang(r); });
+      b.appendChild(st); b.appendChild(sub); b.appendChild(star); b.appendChild(dot);
       b.addEventListener("click", function () { selected = r; renderList(); renderDetail(); });
       $list.appendChild(b);
     });
@@ -1512,7 +1569,9 @@
     bind(r, "nama", nameIn, renderList);
     bind(r, "link", linkIn, function () { go.href = r.link || "#"; renderList(); });
     grow.appendChild(nameIn); grow.appendChild(linkIn);
-    head.appendChild(grow); head.appendChild(go);
+    var starBig = bikinBintang(r, true);
+    starBig.addEventListener("click", function () { toggleBintang(r); });
+    head.appendChild(grow); head.appendChild(starBig); head.appendChild(go);
 
     var body = el("div", "dbody");
     var g1 = el("div", "grid2");
@@ -1615,9 +1674,10 @@
   }
 
   function renderStats() {
-    var total = rows.length, nodata = 0, mail = 0, reach = 0, contacted = 0, replied = 0, paid = 0, money = {};
+    var total = rows.length, nodata = 0, mail = 0, reach = 0, star = 0, contacted = 0, replied = 0, paid = 0, money = {};
     rows.forEach(function (r) {
       if (!hasData(r)) nodata++;
+      if (berbintang(r)) star++;
       if (String(r.email || "").trim()) mail++;
       if (String(r.email || "").trim() || String(r.kontak || "").trim()) reach++;
       if (r.status !== "Belum Dihubungi" && r.status !== "SKIP" && r.status !== "SIMPAN NANTI") contacted++;
@@ -1638,6 +1698,7 @@
       d.appendChild(l); d.appendChild(v); $stats.appendChild(d);
     }
     card("Total channel", total, "");
+    card("\u2605 Potensial", star, "");
     card("Belum ada data", nodata, total ? " / " + total : "", nodata > 0);
     card("Rentang 5k–20k", bandCount(), "");
     card("Punya email", mail, total ? " / " + total : "");
@@ -1654,7 +1715,9 @@
     $chips.textContent = "";
     FILTERS.forEach(function (f) {
       var b = el("button", "chip", { "aria-pressed": String(filter === f[0]) });
-      b.textContent = f[1];
+      var n = f[0] === "all" ? rows.filter(passRest).length : hitungChip(f[0]);
+      b.textContent = f[1] + "  " + n;
+      if (!n && f[0] !== "all") b.style.opacity = ".45";
       b.addEventListener("click", function () { filter = f[0]; renderChips(); renderList(); });
       $chips.appendChild(b);
     });
@@ -1694,6 +1757,7 @@
         ["Simpan ke Repo", "Minta sandi dulu tiap kali. Commit data.json langsung ke repo GitHub lewat API \u2014 nggak ada dialog file, nggak usah buka terminal. Sekitar semenit setelahnya, semua tim buka link dan lihat versi itu. Perlu fine-grained token dengan izin Contents: Read and write, dan token itu cuma nyimpen di browser kamu."],
         ["CSV", "Ekspor buat Excel atau Sheets. Bukan tempat nyimpan."],
         ["Rentang sub", "Isi min dan max buat nyaring ukuran channel. Tombol 5k\u201320k langsung ke rentang paling realistis buat dev kecil \u2014 penontonnya lebih niat dan peluang dibales jauh lebih tinggi daripada channel gede."],
+        ["\u2605 Bintang", "Tandai channel yang menurut kamu paling layak dikejar. Klik bintangnya langsung di daftar, nggak usah buka detailnya. Saring pakai chip \u2605 Potensial, atau urutkan biar yang berbintang naik ke atas. Tanda ini penilaian kamu sendiri \u2014 nggak akan ketimpa waktu data tim disinkronkan."],
         ["Genre", "Genre game yang biasa dia mainin. Isi manual atau klik Tebak. Waktu Lengkapi Data jalan, genre ketebak sendiri dari deskripsi channel. Saring lewat dropdown genre di kiri \u2014 ini yang bikin satu database kepakai buat semua project kamu."],
         ["Kontak lain", "Discord, X, Twitch, Instagram, Facebook, TikTok, Linktree, Telegram, Bluesky, Steam \u2014 semuanya jadi tombol yang bisa diklik. Yang ditulis di deskripsi channel kepanen otomatis waktu Lengkapi Data. Yang ada di seksi Link halaman About nggak dikasih API, jadi blok teksnya kamu sorot lalu tempel ke kolom ini \u2014 link-nya diambil sendiri. Ini penting karena YouTube mbatasin berapa email yang boleh dibuka per hari, sementara link ini nggak dibatasi."],
         ["Kolom Sumber", "Nyatet asal-usul tiap baris, jadi datanya selalu bisa dicek. Chip Estimasi nyaring yang angkanya masih kiraan."]
@@ -1773,7 +1837,7 @@
   // Kolom milik data tim vs kolom hasil kerja kamu.
   var REF_FIELDS  = ["nama","link","sub","negara","fokus","genre","sumber","catatan"];
   var WORK_EXTRA  = ["kontak"];
-  var WORK_FIELDS = ["email","kontak","status","followup","bayaran","harga","mata"];
+  var WORK_FIELDS = ["bintang","email","kontak","status","followup","bayaran","harga","mata"];
   var LS_SNAP = "yt-marketing-shared-v1";
 
   function readSnap() { try { var s = localStorage.getItem(LS_SNAP); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
