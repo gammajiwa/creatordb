@@ -469,6 +469,55 @@
     });
   }
 
+  /* ---------- kunci sebelum nulis ke repo ----------
+     Yang disimpan cuma hash SHA-256, jadi sandinya sendiri nggak kebaca di source.
+     Ini penghalang buat orang iseng, BUKAN keamanan sungguhan: halaman ini publik,
+     dan siapa pun yang paham devtools bisa lewatin. Yang beneran ngunci repo kamu
+     tetap token GitHub, dan token itu cuma ada di browser kamu sendiri. ---------- */
+
+  var PASS_HASH = "8d1a758f28d0f1c202cd2a951dbed66f865a719d20b0313976e44c3e0bfe5ff5";
+
+  function sha256Hex(s) {
+    if (!(window.crypto && crypto.subtle)) return Promise.resolve(null);
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function (buf) {
+      var b = new Uint8Array(buf), out = "";
+      for (var i = 0; i < b.length; i++) out += ("0" + b[i].toString(16)).slice(-2);
+      return out;
+    });
+  }
+
+  function askPass(then) {
+    sheet(function (box, close) {
+      var h2 = el("h2"); h2.textContent = "Konfirmasi sandi";
+      var p1 = el("p");
+      p1.textContent = "Masukin sandi buat nyimpan ke repo. Ditanya tiap kali simpan.";
+      var inp = el("input", "in mono", { type: "password", placeholder: "sandi", "aria-label": "Sandi" });
+      var foot = el("div", "sheetfoot");
+      var c = el("button", "ghost"); c.textContent = "Batal";
+      var ok = el("button", "primary"); ok.textContent = "Lanjut";
+      c.addEventListener("click", close);
+
+      function submit() {
+        var v = inp.value;
+        if (!v) { toast("Sandinya masih kosong."); return; }
+        ok.disabled = true;
+        sha256Hex(v).then(function (hex) {
+          ok.disabled = false;
+          if (hex === null) { toast("Browser ini nggak dukung pengecekan sandi."); return; }
+          if (hex !== PASS_HASH) { inp.value = ""; inp.focus(); toast("Sandinya salah."); return; }
+          close(); then();
+        });
+      }
+      ok.addEventListener("click", submit);
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") submit(); });
+
+      box.appendChild(h2); box.appendChild(p1);
+      box.appendChild(field("Sandi", inp)); box.appendChild(foot);
+      foot.appendChild(c); foot.appendChild(ok);
+      setTimeout(function () { inp.focus(); }, 30);
+    });
+  }
+
   /* ---------- simpan ke repo lewat GitHub API ---------- */
 
   var GH_REPO = "yt-gh-repo", GH_TOKEN = "yt-gh-token";
@@ -561,8 +610,10 @@
   }
 
   document.getElementById("pushBtn").addEventListener("click", function () {
-    var r = ghGet(GH_REPO), t = ghGet(GH_TOKEN);
-    if (r && t) ghCommit(r, t); else ghAsk(ghCommit);
+    askPass(function () {
+      var r = ghGet(GH_REPO), t = ghGet(GH_TOKEN);
+      if (r && t) ghCommit(r, t); else ghAsk(ghCommit);
+    });
   });
 
   /* ---------- csv ---------- */
@@ -1346,7 +1397,7 @@
         ["Muat Data Tim", "Narik ulang daftar bersama dari data.json. Otomatis jalan pas pertama buka."],
         ["Simpan", "Nulis seluruh database ke file yang udah kamu pilih. Klik pertama bakal nanya lokasi; setelah itu langsung nimpa file yang sama. Bisa juga Ctrl+S."],
         ["Simpan Ke\u2026", "Pilih lokasi file yang baru."],
-        ["Simpan ke Repo", "Commit data.json langsung ke repo GitHub lewat API \u2014 nggak ada dialog file, nggak usah buka terminal. Sekitar semenit setelahnya, semua tim buka link dan lihat versi itu. Perlu fine-grained token dengan izin Contents: Read and write, dan token itu cuma nyimpen di browser kamu."],
+        ["Simpan ke Repo", "Minta sandi dulu tiap kali. Commit data.json langsung ke repo GitHub lewat API \u2014 nggak ada dialog file, nggak usah buka terminal. Sekitar semenit setelahnya, semua tim buka link dan lihat versi itu. Perlu fine-grained token dengan izin Contents: Read and write, dan token itu cuma nyimpen di browser kamu."],
         ["CSV", "Ekspor buat Excel atau Sheets. Bukan tempat nyimpan."],
         ["Rentang sub", "Isi min dan max buat nyaring ukuran channel. Tombol 5k\u201320k langsung ke rentang paling realistis buat dev kecil \u2014 penontonnya lebih niat dan peluang dibales jauh lebih tinggi daripada channel gede."],
         ["Genre", "Genre game yang biasa dia mainin. Isi manual atau klik Tebak. Waktu Lengkapi Data jalan, genre ketebak sendiri dari deskripsi channel. Saring lewat dropdown genre di kiri \u2014 ini yang bikin satu database kepakai buat semua project kamu."],
