@@ -327,9 +327,33 @@
     return n;
   }
   var tTimer = null;
-  function toast(m) {
-    $toast.textContent = m; $toast.classList.add("on");
-    clearTimeout(tTimer); tTimer = setTimeout(function () { $toast.classList.remove("on"); }, 3600);
+  function toast(m, onClick) {
+    $toast.textContent = m;
+    $toast.classList.add("on");
+    $toast.style.cursor = onClick ? "pointer" : "";
+    $toast.style.pointerEvents = onClick ? "auto" : "none";
+    $toast.onclick = onClick || null;
+    clearTimeout(tTimer);
+    if (!onClick) tTimer = setTimeout(function () { $toast.classList.remove("on"); }, 3600);
+  }
+
+  /* ---------- pendeteksi versi ----------
+     GitHub Pages nyuruh browser nyimpen index.html sampai 10 menit (max-age=600),
+     jadi versi baru bisa nggak keliatan walau server udah update. version.txt
+     diambil tanpa cache; kalau isinya beda dari BUILD, kasih tau biar dimuat ulang. */
+  var BUILD = "20260901-2147";
+  function checkVersion() {
+    fetch("version.txt", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (t) {
+        if (!t) return;
+        t = t.trim();
+        if (t && t !== BUILD) {
+          toast("Ada versi baru dari tool ini. Klik di sini buat muat ulang.", function () {
+            location.replace(location.pathname + "?v=" + encodeURIComponent(t));
+          });
+        }
+      })["catch"](function () {});
   }
   function flag(t, on) { $saver.textContent = t; $saver.setAttribute("data-on", on ? "1" : "0"); }
   function num(v) { var n = parseFloat(String(v).replace(/[^0-9.\-]/g, "")); return isNaN(n) ? 0 : n; }
@@ -1467,12 +1491,15 @@
       note2.style.color = "var(--accent)";
       note2.textContent = "Editan kamu kesimpen di browser kamu sendiri, nggak keganggu sama data tim dan nggak keliatan orang lain. Klik Simpan kalau mau punya salinannya sebagai file.";
 
+      var ver = el("div", "count");
+      ver.textContent = "versi " + BUILD;
       var foot = el("div", "sheetfoot");
       var ok = el("button", "primary"); ok.textContent = "Ngerti";
       ok.addEventListener("click", close);
       foot.appendChild(ok);
 
-      box.appendChild(h2); box.appendChild(dl); box.appendChild(note); box.appendChild(note2); box.appendChild(foot);
+      box.appendChild(h2); box.appendChild(dl); box.appendChild(note); box.appendChild(note2);
+      box.appendChild(ver); box.appendChild(foot);
     });
   }
   document.getElementById("helpBtn").addEventListener("click", openHelp);
@@ -1597,6 +1624,7 @@
   renderAll();
   flag("tersimpan di browser", false);
   loadShared(true);
+  checkVersion();
   idb("readonly", function (st) { return st.get("file"); }).then(function (h) {
     if (!h) return;
     fileHandle = h; flag("file: " + (h.name || "tersambung"), false);
