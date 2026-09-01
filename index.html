@@ -203,6 +203,7 @@
       <button id="findBtn" class="primary">Cari Channel</button>
       <button id="fetchBtn">Lengkapi Data</button>
       <button id="scanBtn">Scan &amp; Tambah</button>
+      <button id="sharedBtn" class="ghost">Muat Data Tim</button>
       <button id="addBtn" class="ghost">+ Kosong</button>
       <button id="openBtn" class="ghost">Buka&hellip;</button>
       <button id="csvBtn" class="ghost">CSV</button>
@@ -240,11 +241,13 @@
   </div>
 
   <footer>
-    <p><b>Kenapa banyak baris yang kosong.</b> 124 dari 164 channel di sini baru punya nama dan link &mdash;
-    handle-nya asli, dari arsip komunitas, tapi subscriber dan negaranya belum pernah diverifikasi.
-    Tombol <b>Ambil Data YouTube</b> ngisi itu semua otomatis lewat API resmi YouTube. Sekali jalan, semua baris beres.</p>
+    <p><b>Daftar bersama.</b> Waktu pertama dibuka, tool ini otomatis muat <code>data.json</code> yang ada di folder yang sama
+    &mdash; itu daftar dasar buat satu tim, jadi semua orang mulai dari isi yang sama. Datanya nggak ditanam di dalam HTML;
+    kalau kamu mau perbarui daftar timnya, tinggal ganti <code>data.json</code>-nya. Tombol <b>Muat Data Tim</b> narik ulang
+    kapan pun, dan yang udah ada di layarmu nggak bakal kembar.</p>
 
-    <p><b>Satu file, satu sumber data.</b> Database-nya nempel di dalam <code>index.html</code> ini.
+    <p><b>Editan kamu pribadi.</b> Begitu kamu ngetik apa pun, itu kesimpen di browser kamu sendiri dan nggak keganggu
+    sama <code>data.json</code>. Database-nya nempel di dalam <code>index.html</code> ini.
     Tiap ketikan langsung kesimpen di browser. <b>Simpan</b> nulis ke satu file <code>youtuber-db.json</code>
     yang kamu pilih sekali &mdash; klik berikutnya langsung nimpa file yang sama. Tombol <b>CSV</b> cuma buat ekspor ke Excel.</p>
 
@@ -953,7 +956,7 @@
       if (!rows.length) {
         s.textContent = "Database masih kosong";
         e.appendChild(s);
-        e.appendChild(document.createTextNode("Klik Cari Channel, masukin judul game yang mirip punyamu, dan tool ini narik channel yang beneran pernah mainin game itu \u2014 lengkap sama subscriber aslinya."));
+        e.appendChild(document.createTextNode("Lagi muat daftar bersama\u2026 Kalau tetap kosong, klik Muat Data Tim, atau Cari Channel buat narik langsung dari YouTube."));
       } else {
         s.textContent = "Kosong";
         e.appendChild(s);
@@ -1155,8 +1158,28 @@
 
   /* ---------- boot ---------- */
 
-  rows = readLocal() || [];
-  renderAll();
+  function loadShared(silent) {
+    return fetch("data.json", { cache: "no-store" })
+      .then(function (res) { if (!res.ok) throw new Error("404"); return res.json(); })
+      .then(function (d) {
+        if (!d || !d.length) throw new Error("kosong");
+        var m = merge(d.map(fromObj));
+        touch(); renderAll();
+        if (m.added) toast(m.added + " channel dimuat dari data tim." + (m.skipped ? " " + m.skipped + " duplikat dilewati." : ""));
+        else toast("Data tim udah sama persis \u2014 nggak ada yang baru.");
+      })["catch"](function () {
+        if (!silent) toast("data.json nggak ketemu di folder yang sama sama index.html.");
+        renderAll();
+      });
+  }
+  document.getElementById("sharedBtn").addEventListener("click", function () { loadShared(false); });
+
+  var local = readLocal();
+  if (local && local.length) {
+    rows = local; renderAll();
+  } else {
+    rows = []; renderAll(); loadShared(true);
+  }
   flag("tersimpan di browser", false);
   idb("readonly", function (st) { return st.get("file"); }).then(function (h) {
     if (!h) return;
