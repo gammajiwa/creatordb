@@ -218,6 +218,8 @@
       <button id="addBtn" class="ghost">+ Kosong</button>
       <button id="openBtn" class="ghost">Buka&hellip;</button>
       <button id="csvBtn" class="ghost">CSV</button>
+      <button id="pushBtn" title="Commit data.json ke repo, semua tim langsung lihat">Simpan ke Repo</button>
+      <button id="saveAsBtn" class="ghost" title="Pilih lokasi file">Simpan Ke&hellip;</button>
       <button id="saveBtn">Simpan</button>
       <button id="helpBtn" class="ghost" title="Bantuan" aria-label="Bantuan">?</button>
     </div>
@@ -402,34 +404,166 @@
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(u); }, 1500);
   }
-  function save() {
-    var text = JSON.stringify(rows, null, 2);
-    if (!window.showSaveFilePicker) {
-      download("youtuber-db.json", text);
-      toast("Browser ini nggak bisa nimpa file langsung — datanya diunduh."); flag("terunduh", false); return;
-    }
-    var go = fileHandle
-      ? fileHandle.queryPermission({ mode:"readwrite" }).then(function (p) {
-          return p === "granted" ? "granted" : fileHandle.requestPermission({ mode:"readwrite" });
-        }).then(function (p) { return p === "granted" ? fileHandle : null; })
-      : Promise.resolve(null);
-    go.then(function (h) {
-      if (h) return h;
-      return window.showSaveFilePicker({
-        suggestedName:"youtuber-db.json",
-        types:[{ description:"Database YouTuber", accept:{ "application/json":[".json"] } }]
-      }).then(function (nh) { fileHandle = nh; idb("readwrite", function (st) { return st.put(nh, "file"); }); return nh; });
-    }).then(function (h) {
-      return h.createWritable().then(function (w) { return w.write(text).then(function () { return w.close(); }); });
-    }).then(function () {
-      flag("tersimpan ke file", false);
-      toast("Tersimpan ke " + (fileHandle && fileHandle.name ? fileHandle.name : "file") + ".");
-    })["catch"](function (err) {
-      if (err && err.name === "AbortError") return;
-      download("youtuber-db.json", text);
-      toast("Nggak bisa nulis ke file — datanya diunduh aja.");
+  function writeTo(handle, text) {
+    return handle.createWritable().then(function (w) {
+      return w.write(text).then(function () { return w.close(); });
     });
   }
+
+  function payload() { return JSON.stringify(rows, null, 2); }
+
+  function rememberFile(handle) {
+    fileHandle = handle;
+    idb("readwrite", function (st) { return st.put(handle, "file"); });
+    flag("file: " + (handle.name || "tersambung"), false);
+  }
+
+  // Dipanggil LANGSUNG dari klik — dialog pilih lokasi butuh gestur yang masih segar,
+  // jadi nggak boleh ada satu pun await sebelum showSaveFilePicker.
+  function saveAs() {
+    if (!window.showSaveFilePicker) {
+      download("data.json", payload());
+      toast("Browser ini nggak dukung nyimpan ke folder. Pakai Chrome atau Edge kalau mau nulis langsung ke direktori.");
+      return;
+    }
+    var text = payload();
+    window.showSaveFilePicker({
+      suggestedName: "data.json",
+      types: [{ description: "Database YouTuber", accept: { "application/json": [".json"] } }]
+    }).then(function (handle) {
+      rememberFile(handle);
+      return writeTo(handle, text);
+    }).then(function () {
+      flag("tersimpan ke file", false);
+      toast("Tersimpan ke " + (fileHandle.name || "file") + ". Klik Simpan berikutnya langsung nimpa file itu.");
+    })["catch"](function (err) {
+      if (err && err.name === "AbortError") return;
+      download("data.json", text);
+      toast("Nggak bisa nulis ke folder itu — datanya diunduh sebagai gantinya.");
+    });
+  }
+
+  function save() {
+    if (!window.showSaveFilePicker) {
+      download("data.json", payload());
+      toast("Browser ini nggak dukung nyimpan ke folder. Pakai Chrome atau Edge kalau mau nulis langsung ke direktori.");
+      return;
+    }
+    if (!fileHandle) { saveAs(); return; }
+
+    var text = payload();
+    // requestPermission juga butuh gestur — panggil langsung, jangan lewat await dulu.
+    fileHandle.requestPermission({ mode: "readwrite" }).then(function (perm) {
+      if (perm !== "granted") {
+        toast("Izin nulis ke file itu ditolak. Klik \u201cSimpan Ke\u2026\u201d buat pilih lokasi lagi.");
+        return null;
+      }
+      return writeTo(fileHandle, text);
+    }).then(function (res) {
+      if (res === null) return;
+      flag("tersimpan ke file", false);
+      toast("Tersimpan ke " + (fileHandle.name || "file") + ".");
+    })["catch"](function (err) {
+      if (err && err.name === "AbortError") return;
+      toast("File tujuannya nggak kejangkau lagi \u2014 klik \u201cSimpan Ke\u2026\u201d buat pilih ulang.");
+    });
+  }
+
+  /* ---------- simpan ke repo lewat GitHub API ---------- */
+
+  var GH_REPO = "yt-gh-repo", GH_TOKEN = "yt-gh-token";
+  function ghGet(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
+  function ghSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  function b64utf8(s) {
+    var bytes = new TextEncoder().encode(s), bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+  function guessRepo() {
+    var m = location.hostname.match(/^([^.]+)\.github\.io$/);
+    var seg = location.pathname.split("/").filter(Boolean)[0];
+    return m && seg ? m[1] + "/" + seg : "";
+  }
+
+  function ghAsk(then) {
+    sheet(function (box, close) {
+      var h2 = el("h2"); h2.textContent = "Simpan ke repo GitHub";
+      var p1 = el("p");
+      p1.textContent = "Ini nge-commit data.json langsung ke repo lewat GitHub API — nggak ada dialog file, dan begitu ke-commit semua tim lihat versi yang sama.";
+      var p2 = el("p");
+      p2.innerHTML = 'Butuh token: buka <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">Fine-grained personal access token</a> &rarr; pilih <b>repo ini saja</b> &rarr; Repository permissions &rarr; <b>Contents: Read and write</b>. Jangan pakai token classic yang aksesnya ke semua repo.';
+      var p3 = el("p");
+      p3.textContent = "Token disimpan cuma di browser kamu, nggak pernah masuk ke repo. Tiap orang di tim pakai tokennya sendiri.";
+
+      var repoIn = el("input", "in mono", { placeholder: "owner/repo", "aria-label": "Repo" });
+      repoIn.value = ghGet(GH_REPO) || guessRepo();
+      var tokIn = el("input", "in mono", { type: "password", placeholder: "github_pat_…", "aria-label": "Token" });
+      tokIn.value = ghGet(GH_TOKEN);
+
+      var foot = el("div", "sheetfoot");
+      var c = el("button", "ghost"); c.textContent = "Batal";
+      var ok = el("button", "primary"); ok.textContent = "Simpan & commit";
+      c.addEventListener("click", close);
+      ok.addEventListener("click", function () {
+        var r = repoIn.value.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/\/+$/, "");
+        var t = tokIn.value.trim();
+        if (!/^[\w.\-]+\/[\w.\-]+$/.test(r)) { toast("Format repo harus owner/repo."); return; }
+        if (!t) { toast("Token-nya masih kosong."); return; }
+        ghSet(GH_REPO, r); ghSet(GH_TOKEN, t); close(); then(r, t);
+      });
+
+      box.appendChild(h2); box.appendChild(p1); box.appendChild(p2); box.appendChild(p3);
+      box.appendChild(field("Repo", repoIn)); box.appendChild(field("Token", tokIn));
+      box.appendChild(foot);
+      setTimeout(function () { (tokIn.value ? repoIn : tokIn).focus(); }, 30);
+    });
+  }
+
+  function ghCommit(repo, token) {
+    var url = "https://api.github.com/repos/" + repo + "/contents/data.json";
+    var head = {
+      "Authorization": "Bearer " + token,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28"
+    };
+    flag("mengirim ke repo\u2026", true);
+    toast("Ngirim ke " + repo + "\u2026");
+
+    fetch(url + "?ref=HEAD", { headers: head, cache: "no-store" })
+      .then(function (r) { return r.status === 404 ? { sha: null } : r.json(); })
+      .then(function (info) {
+        var body = {
+          message: "Perbarui data.json (" + rows.length + " channel) lewat YouTuber Marketing List",
+          content: b64utf8(payload())
+        };
+        if (info && info.sha) body.sha = info.sha;
+        return fetch(url, { method: "PUT", headers: head, body: JSON.stringify(body) })
+          .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, status: r.status, body: b }; }); });
+      })
+      .then(function (res) {
+        if (res.ok) {
+          flag("ter-commit ke repo", false);
+          toast("Ke-commit ke " + repo + ". Situsnya keupdate sekitar semenit, terus tim lihat versi ini.");
+          return;
+        }
+        flag("gagal commit", false);
+        var msg = res.body && res.body.message ? res.body.message : "";
+        if (res.status === 401) toast("Token ditolak. Cek lagi tokennya \u2014 klik Simpan ke Repo buat ganti.");
+        else if (res.status === 403) toast("Token nggak punya izin Contents: Read and write di repo itu.");
+        else if (res.status === 404) toast("Repo nggak ketemu, atau token nggak dikasih akses ke repo itu.");
+        else if (res.status === 409) toast("Ada yang commit duluan. Refresh halamannya, terus coba lagi.");
+        else toast("Gagal commit: " + msg);
+      })["catch"](function () {
+        flag("gagal commit", false);
+        toast("Nggak nyampe ke GitHub. Cek koneksi.");
+      });
+  }
+
+  document.getElementById("pushBtn").addEventListener("click", function () {
+    var r = ghGet(GH_REPO), t = ghGet(GH_TOKEN);
+    if (r && t) ghCommit(r, t); else ghAsk(ghCommit);
+  });
 
   /* ---------- csv ---------- */
 
@@ -1210,7 +1344,9 @@
         ["Lengkapi Data", "Ngisi subscriber, negara, dan nama resmi buat baris yang datanya masih kosong."],
         ["Scan & Tambah", "Tempel URL, @handle, atau nama channel per baris. Yang udah ada dipisahin dari yang baru, jadi nggak bakal kembar."],
         ["Muat Data Tim", "Narik ulang daftar bersama dari data.json. Otomatis jalan pas pertama buka."],
-        ["Simpan", "Nulis seluruh database ke satu file youtuber-db.json. Pilih lokasinya sekali, klik berikutnya langsung nimpa file yang sama. Bisa juga pakai Ctrl+S."],
+        ["Simpan", "Nulis seluruh database ke file yang udah kamu pilih. Klik pertama bakal nanya lokasi; setelah itu langsung nimpa file yang sama. Bisa juga Ctrl+S."],
+        ["Simpan Ke\u2026", "Pilih lokasi file yang baru."],
+        ["Simpan ke Repo", "Commit data.json langsung ke repo GitHub lewat API \u2014 nggak ada dialog file, nggak usah buka terminal. Sekitar semenit setelahnya, semua tim buka link dan lihat versi itu. Perlu fine-grained token dengan izin Contents: Read and write, dan token itu cuma nyimpen di browser kamu."],
         ["CSV", "Ekspor buat Excel atau Sheets. Bukan tempat nyimpan."],
         ["Rentang sub", "Isi min dan max buat nyaring ukuran channel. Tombol 5k\u201320k langsung ke rentang paling realistis buat dev kecil \u2014 penontonnya lebih niat dan peluang dibales jauh lebih tinggi daripada channel gede."],
         ["Genre", "Genre game yang biasa dia mainin. Isi manual atau klik Tebak. Waktu Lengkapi Data jalan, genre ketebak sendiri dari deskripsi channel. Saring lewat dropdown genre di kiri \u2014 ini yang bikin satu database kepakai buat semua project kamu."],
@@ -1242,6 +1378,7 @@
   document.getElementById("helpBtn").addEventListener("click", openHelp);
 
   document.getElementById("saveBtn").addEventListener("click", save);
+  document.getElementById("saveAsBtn").addEventListener("click", saveAs);
   document.getElementById("openBtn").addEventListener("click", openFile);
   document.getElementById("scanBtn").addEventListener("click", openScan);
   document.getElementById("csvBtn").addEventListener("click", function () {
